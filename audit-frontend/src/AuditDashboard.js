@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -8,194 +8,37 @@ import {
   Clock, FileText, TrendingUp,
   Eye, Edit, Save, X
 } from 'lucide-react';
-
-// Styles CSS intégrés pour éviter les dépendances
-const styles = {
-  container: {
-    minHeight: '100vh',
-    backgroundColor: '#f9fafb'
-  },
-  header: {
-    backgroundColor: 'white',
-    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-    borderBottom: '1px solid #e5e7eb'
-  },
-  headerContent: {
-    maxWidth: '1280px',
-    margin: '0 auto',
-    padding: '0 1rem',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    height: '64px'
-  },
-  title: {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    background: 'linear-gradient(to right, #2563eb, #7c3aed)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem'
-  },
-  badge: {
-    backgroundColor: '#dbeafe',
-    color: '#1d4ed8',
-    padding: '0.25rem 0.5rem',
-    borderRadius: '9999px',
-    fontSize: '0.75rem',
-    fontWeight: '500'
-  },
-  nav: {
-    display: 'flex',
-    gap: '0.25rem'
-  },
-  navButton: {
-    padding: '0.5rem 1rem',
-    borderRadius: '0.5rem',
-    transition: 'all 0.2s',
-    border: 'none',
-    cursor: 'pointer'
-  },
-  navButtonActive: {
-    backgroundColor: '#dbeafe',
-    color: '#1d4ed8',
-    fontWeight: '500'
-  },
-  navButtonInactive: {
-    color: '#6b7280',
-    backgroundColor: 'transparent'
-  },
-  main: {
-    maxWidth: '1280px',
-    margin: '0 auto',
-    padding: '2rem 1rem'
-  },
-  statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-    gap: '1.5rem',
-    marginBottom: '1.5rem'
-  },
-  statCard: {
-    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-    padding: '1.5rem',
-    borderRadius: '0.75rem',
-    color: 'white'
-  },
-  statCardContent: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  card: {
-    backgroundColor: 'white',
-    padding: '1.5rem',
-    borderRadius: '0.75rem',
-    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-    border: '1px solid #e5e7eb'
-  },
-  chartsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-    gap: '1.5rem',
-    marginBottom: '1.5rem'
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse'
-  },
-  th: {
-    textAlign: 'left',
-    padding: '1rem',
-    fontWeight: '500',
-    backgroundColor: '#f9fafb',
-    borderBottom: '1px solid #e5e7eb'
-  },
-  td: {
-    padding: '1rem',
-    borderBottom: '1px solid #e5e7eb'
-  },
-  statusBadge: {
-    padding: '0.25rem 0.5rem',
-    borderRadius: '9999px',
-    fontSize: '0.75rem',
-    fontWeight: '500'
-  },
-  button: {
-    padding: '0.5rem 1rem',
-    borderRadius: '0.5rem',
-    border: 'none',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    transition: 'all 0.2s'
-  },
-  buttonPrimary: {
-    backgroundColor: '#2563eb',
-    color: 'white'
-  },
-  input: {
-    width: '100%',
-    padding: '0.5rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.5rem',
-    fontSize: '0.875rem'
-  },
-  modal: {
-    position: 'fixed',
-    inset: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 50
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: '1.5rem',
-    borderRadius: '0.75rem',
-    maxWidth: '32rem',
-    width: '100%',
-    margin: '1rem',
-    maxHeight: '90vh',
-    overflowY: 'auto'
-  },
-  filterGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '1rem'
-  },
-  loading: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '16rem'
-  },
-  spinner: {
-    width: '3rem',
-    height: '3rem',
-    border: '2px solid #e5e7eb',
-    borderTop: '2px solid #2563eb',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite'
-  }
-};
+import './styles/AuditDashboard.css';
 
 const API_BASE = 'http://localhost:3001/api';
+
+// Hook personnalisé pour le debouncing
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 const AuditDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [dashboardStats, setDashboardStats] = useState(null);
   const [regulations, setRegulations] = useState([]);
-  const [filteredRegulations, setFilteredRegulations] = useState([]);
   const [domains, setDomains] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('');
   const [editingAudit, setEditingAudit] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [auditForm, setAuditForm] = useState({
     conformite: '',
     risque: '',
@@ -204,6 +47,28 @@ const AuditDashboard = () => {
     deadline: '',
     owner: ''
   });
+
+  // Debounce search term pour améliorer les performances
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // Filtrage mémorisé des réglementations
+  const filteredRegulations = useMemo(() => {
+    let filtered = regulations;
+    
+    if (debouncedSearchTerm) {
+      filtered = filtered.filter(reg => 
+        reg.titre?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        reg.exigence?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        reg.domaine?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+      );
+    }
+    
+    if (selectedDomain) {
+      filtered = filtered.filter(reg => reg.domaine === selectedDomain);
+    }
+    
+    return filtered;
+  }, [debouncedSearchTerm, selectedDomain, regulations]);
 
   // Couleurs pour les graphiques
   const COLORS = {
@@ -215,69 +80,64 @@ const AuditDashboard = () => {
     indigo: '#6366F1'
   };
 
-  const CHART_COLORS = [COLORS.primary, COLORS.success, COLORS.warning, COLORS.danger, COLORS.purple, COLORS.indigo];
+  const CHART_COLORS = [
+    COLORS.primary, 
+    COLORS.success, 
+    COLORS.warning, 
+    COLORS.danger, 
+    COLORS.purple, 
+    COLORS.indigo
+  ];
 
-  // Fetch dashboard stats
-  const fetchDashboardStats = async () => {
-    setLoading(true);
+  // Fetch dashboard stats avec gestion d'erreur améliorée
+  const fetchDashboardStats = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/dashboard/stats`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setDashboardStats(data);
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur lors du chargement des statistiques:', error);
     }
-    setLoading(false);
-  };
+  }, []);
 
-  // Fetch regulations
-  const fetchRegulations = async () => {
-    setLoading(true);
+  // Fetch regulations avec gestion d'erreur améliorée
+  const fetchRegulations = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/reglementation`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setRegulations(data);
-      setFilteredRegulations(data);
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur lors du chargement des réglementations:', error);
     }
-    setLoading(false);
-  };
+  }, []);
 
   // Fetch domains
-  const fetchDomains = async () => {
+  const fetchDomains = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/reglementation/domaines`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setDomains(data);
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur lors du chargement des domaines:', error);
     }
-  };
+  }, []);
 
-  // Filter regulations
-  useEffect(() => {
-    let filtered = regulations;
+  // Save audit avec gestion des états
+  const saveAudit = useCallback(async (reglementationId, auditData) => {
+    if (isSaving) return;
     
-    if (searchTerm) {
-      filtered = filtered.filter(reg => 
-        reg.titre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        reg.exigence?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        reg.domaine?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    if (selectedDomain) {
-      filtered = filtered.filter(reg => reg.domaine === selectedDomain);
-    }
-    
-    setFilteredRegulations(filtered);
-  }, [searchTerm, selectedDomain, regulations]);
-
-  // Save audit - Version corrigée
-  const saveAudit = async (reglementationId, auditData) => {
+    setIsSaving(true);
     try {
-      console.log('🔄 Sauvegarde en cours...', { reglementationId, auditData });
+      console.log('Sauvegarde en cours...', { reglementationId, auditData });
       
       const response = await fetch(`${API_BASE}/audit`, {
         method: 'POST',
@@ -291,42 +151,43 @@ const AuditDashboard = () => {
         })
       });
       
-      console.log('📡 Réponse status:', response.status);
-      
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ Audit sauvegardé:', result);
+        console.log('Audit sauvegardé:', result);
         
-        // Mettre à jour les données localement pour un affichage immédiat
+        // Mettre à jour les données localement
         setRegulations(prev => prev.map(reg => 
           reg.id === reglementationId 
             ? { ...reg, ...auditData }
             : reg
         ));
         
-        // Rafraîchir les données depuis le serveur
-        await fetchRegulations();
-        await fetchDashboardStats();
+        // Rafraîchir les données
+        await Promise.all([
+          fetchRegulations(),
+          fetchDashboardStats()
+        ]);
         
         // Fermer le modal
         setEditingAudit(null);
         resetAuditForm();
         
-        // Notification visuelle (optionnelle)
-        alert('✅ Audit sauvegardé avec succès !');
+        alert('Audit sauvegardé avec succès !');
         
       } else {
         const errorData = await response.json();
-        console.error('❌ Erreur HTTP:', response.status, errorData);
-        alert(`❌ Erreur lors de la sauvegarde: ${errorData.error || 'Erreur inconnue'}`);
+        console.error('Erreur HTTP:', response.status, errorData);
+        alert(`Erreur lors de la sauvegarde: ${errorData.error || 'Erreur inconnue'}`);
       }
     } catch (error) {
-      console.error('❌ Erreur réseau:', error);
-      alert('❌ Erreur de connexion au serveur. Vérifiez que votre backend est démarré.');
+      console.error('Erreur réseau:', error);
+      alert('Erreur de connexion au serveur.');
+    } finally {
+      setIsSaving(false);
     }
-  };
+  }, [isSaving, fetchRegulations, fetchDashboardStats]);
 
-  const resetAuditForm = () => {
+  const resetAuditForm = useCallback(() => {
     setAuditForm({
       conformite: '',
       risque: '',
@@ -335,45 +196,66 @@ const AuditDashboard = () => {
       deadline: '',
       owner: ''
     });
-  };
+  }, []);
 
   // Initial load
   useEffect(() => {
-    fetchDashboardStats();
-    fetchRegulations();
-    fetchDomains();
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([
+          fetchDashboardStats(),
+          fetchRegulations(),
+          fetchDomains()
+        ]);
+      } catch (error) {
+        console.error('Erreur lors du chargement initial:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [fetchDashboardStats, fetchRegulations, fetchDomains]);
+
+  const getStatusClass = useCallback((status) => {
+    switch (status) {
+      case 'Conforme': return 'conforme';
+      case 'Non Conforme': return 'non-conforme';
+      case 'En Cours': return 'en-cours';
+      default: return 'default';
+    }
   }, []);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Conforme': return { color: '#059669', backgroundColor: '#ecfdf5' };
-      case 'Non Conforme': return { color: '#dc2626', backgroundColor: '#fef2f2' };
-      case 'En Cours': return { color: '#d97706', backgroundColor: '#fffbeb' };
-      default: return { color: '#6b7280', backgroundColor: '#f9fafb' };
-    }
-  };
-
-  const getRiskColor = (risk) => {
+  const getRiskClass = useCallback((risk) => {
     switch (risk) {
-      case 'Élevé': return { color: '#dc2626', backgroundColor: '#fef2f2' };
-      case 'Moyen': return { color: '#d97706', backgroundColor: '#fffbeb' };
-      case 'Faible': return { color: '#059669', backgroundColor: '#ecfdf5' };
-      default: return { color: '#6b7280', backgroundColor: '#f9fafb' };
+      case 'Élevé': return 'eleve';
+      case 'Moyen': return 'moyen';
+      case 'Faible': return 'faible';
+      default: return 'default';
     }
-  };
+  }, []);
+
+  // Handle form input changes
+  const handleInputChange = useCallback((field, value) => {
+    setAuditForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
 
   // Dashboard Tab
-  const DashboardTab = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+  const DashboardTab = React.memo(() => (
+    <div className="audit-dashboard-content">
       {/* Stats Cards */}
-      <div style={styles.statsGrid}>
-        <div style={{ ...styles.statCard, background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
-          <div style={styles.statCardContent}>
+      <div className="audit-stats-grid">
+        <div className="audit-stat-card primary">
+          <div className="audit-stat-card-content">
             <div>
-              <h3 style={{ color: 'rgba(219, 234, 254, 0.8)', fontSize: '0.875rem', fontWeight: '500' }}>
+              <h3 className="audit-stat-title" style={{ color: 'rgba(219, 234, 254, 0.8)' }}>
                 Réglementations
               </h3>
-              <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
+              <p className="audit-stat-value">
                 {dashboardStats?.totaux?.reglementations || 0}
               </p>
             </div>
@@ -381,13 +263,13 @@ const AuditDashboard = () => {
           </div>
         </div>
         
-        <div style={{ ...styles.statCard, background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-          <div style={styles.statCardContent}>
+        <div className="audit-stat-card success">
+          <div className="audit-stat-card-content">
             <div>
-              <h3 style={{ color: 'rgba(236, 253, 245, 0.8)', fontSize: '0.875rem', fontWeight: '500' }}>
+              <h3 className="audit-stat-title" style={{ color: 'rgba(236, 253, 245, 0.8)' }}>
                 Audits Réalisés
               </h3>
-              <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
+              <p className="audit-stat-value">
                 {dashboardStats?.totaux?.audits || 0}
               </p>
             </div>
@@ -395,13 +277,13 @@ const AuditDashboard = () => {
           </div>
         </div>
         
-        <div style={{ ...styles.statCard, background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>
-          <div style={styles.statCardContent}>
+        <div className="audit-stat-card purple">
+          <div className="audit-stat-card-content">
             <div>
-              <h3 style={{ color: 'rgba(245, 243, 255, 0.8)', fontSize: '0.875rem', fontWeight: '500' }}>
+              <h3 className="audit-stat-title" style={{ color: 'rgba(245, 243, 255, 0.8)' }}>
                 Taux d'Audit
               </h3>
-              <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
+              <p className="audit-stat-value">
                 {dashboardStats?.totaux?.taux_audit || 0}%
               </p>
             </div>
@@ -409,13 +291,13 @@ const AuditDashboard = () => {
           </div>
         </div>
         
-        <div style={{ ...styles.statCard, background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
-          <div style={styles.statCardContent}>
+        <div className="audit-stat-card warning">
+          <div className="audit-stat-card-content">
             <div>
-              <h3 style={{ color: 'rgba(255, 251, 235, 0.8)', fontSize: '0.875rem', fontWeight: '500' }}>
+              <h3 className="audit-stat-title" style={{ color: 'rgba(255, 251, 235, 0.8)' }}>
                 Échéances Proches
               </h3>
-              <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
+              <p className="audit-stat-value">
                 {dashboardStats?.echeances_proches?.length || 0}
               </p>
             </div>
@@ -425,12 +307,10 @@ const AuditDashboard = () => {
       </div>
 
       {/* Charts */}
-      <div style={styles.chartsGrid}>
+      <div className="audit-charts-grid">
         {/* Conformité Chart */}
-        <div style={styles.card}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>
-            Répartition par Conformité
-          </h3>
+        <div className="audit-card">
+          <h3 className="audit-chart-title">Répartition par Conformité</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -452,10 +332,8 @@ const AuditDashboard = () => {
         </div>
 
         {/* Domaines Chart */}
-        <div style={styles.card}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>
-            Audits par Domaine
-          </h3>
+        <div className="audit-card">
+          <h3 className="audit-chart-title">Audits par Domaine</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={dashboardStats?.domaines?.slice(0, 8) || []}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -470,31 +348,31 @@ const AuditDashboard = () => {
 
       {/* Échéances Proches */}
       {dashboardStats?.echeances_proches?.length > 0 && (
-        <div style={styles.card}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
-            <AlertTriangle size={20} style={{ color: '#f59e0b', marginRight: '0.5rem' }} />
+        <div className="audit-card">
+          <h3 className="audit-deadline-header">
+            <AlertTriangle size={20} className="audit-deadline-icon" />
             Échéances Proches (30 jours)
           </h3>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={styles.table}>
+          <div className="audit-table-container">
+            <table className="audit-table">
               <thead>
                 <tr>
-                  <th style={styles.th}>Titre</th>
-                  <th style={styles.th}>Domaine</th>
-                  <th style={styles.th}>Échéance</th>
-                  <th style={styles.th}>Responsable</th>
-                  <th style={styles.th}>Statut</th>
+                  <th>Titre</th>
+                  <th>Domaine</th>
+                  <th>Échéance</th>
+                  <th>Responsable</th>
+                  <th>Statut</th>
                 </tr>
               </thead>
               <tbody>
                 {dashboardStats.echeances_proches.map((item, index) => (
-                  <tr key={index} style={{ transition: 'background-color 0.2s' }}>
-                    <td style={styles.td}>{item.titre}</td>
-                    <td style={styles.td}>{item.domaine}</td>
-                    <td style={styles.td}>{new Date(item.deadline).toLocaleDateString()}</td>
-                    <td style={styles.td}>{item.owner}</td>
-                    <td style={styles.td}>
-                      <span style={{ ...styles.statusBadge, ...getStatusColor(item.conformite) }}>
+                  <tr key={index}>
+                    <td>{item.titre}</td>
+                    <td>{item.domaine}</td>
+                    <td>{new Date(item.deadline).toLocaleDateString()}</td>
+                    <td>{item.owner}</td>
+                    <td>
+                      <span className={`audit-status-badge ${getStatusClass(item.conformite)}`}>
                         {item.conformite || 'Non audité'}
                       </span>
                     </td>
@@ -506,36 +384,29 @@ const AuditDashboard = () => {
         </div>
       )}
     </div>
-  );
+  ));
 
-  // Regulations Tab - Version tableau améliorée
-  const RegulationsTab = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+  // Regulations Tab
+  const RegulationsTab = React.memo(() => (
+    <div className="audit-dashboard-content">
       {/* Filters */}
-      <div style={styles.card}>
-        <div style={styles.filterGrid}>
-          <div style={{ position: 'relative' }}>
-            <Search size={20} style={{ position: 'absolute', left: '12px', top: '12px', color: '#9ca3af' }} />
+      <div className="audit-card">
+        <div className="audit-filter-grid">
+          <div className="audit-search-container">
+            <Search size={20} className="audit-search-icon" />
             <input
               type="text"
               placeholder="Rechercher dans les réglementations..."
-              style={{ ...styles.input, paddingLeft: '40px' }}
+              className="audit-input audit-search-input"
               value={searchTerm}
-              onChange={(e) => {
-                e.stopPropagation();
-                setSearchTerm(e.target.value);
-              }}
-              onFocus={(e) => e.stopPropagation()}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           
           <select
-            style={styles.input}
+            className="audit-input"
             value={selectedDomain}
-            onChange={(e) => {
-              e.stopPropagation();
-              setSelectedDomain(e.target.value);
-            }}
+            onChange={(e) => setSelectedDomain(e.target.value)}
           >
             <option value="">Tous les domaines</option>
             {domains.map((domain, index) => (
@@ -543,7 +414,7 @@ const AuditDashboard = () => {
             ))}
           </select>
           
-          <button style={{ ...styles.button, ...styles.buttonPrimary }}>
+          <button className="audit-button primary">
             <Download size={16} />
             Export CSV
           </button>
@@ -551,106 +422,81 @@ const AuditDashboard = () => {
       </div>
 
       {/* Regulations Table */}
-      <div style={styles.card}>
-        <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>
+      <div className="audit-card">
+        <h3 className="audit-chart-title">
           Liste des Réglementations ({filteredRegulations.length})
         </h3>
         
-        <div style={{ overflowX: 'auto', maxHeight: '70vh', overflowY: 'auto' }}>
-          <table style={styles.table}>
-            <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f9fafb', zIndex: 10 }}>
+        <div className="audit-table-container">
+          <table className="audit-table">
+            <thead>
               <tr>
-                <th style={{ ...styles.th, minWidth: '300px' }}>Réglementation</th>
-                <th style={{ ...styles.th, minWidth: '150px' }}>Domaine</th>
-                <th style={{ ...styles.th, minWidth: '100px' }}>Chapitre</th>
-                <th style={{ ...styles.th, minWidth: '120px' }}>Conformité</th>
-                <th style={{ ...styles.th, minWidth: '100px' }}>Risque</th>
-                <th style={{ ...styles.th, minWidth: '120px' }}>Responsable</th>
-                <th style={{ ...styles.th, minWidth: '120px' }}>Échéance</th>
-                <th style={{ ...styles.th, minWidth: '100px' }}>Actions</th>
+                <th className="col-regulation">Réglementation</th>
+                <th className="col-domain">Domaine</th>
+                <th className="col-chapter">Chapitre</th>
+                <th className="col-conformity">Conformité</th>
+                <th className="col-risk">Risque</th>
+                <th className="col-owner">Responsable</th>
+                <th className="col-deadline">Échéance</th>
+                <th className="col-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredRegulations.map((reg, index) => (
-                <tr key={index} className="hover-row" style={{ borderBottom: '1px solid #e5e7eb' }}>
-                  <td style={styles.td}>
+                <tr key={reg.id || index}>
+                  <td>
                     <div>
-                      <div style={{ fontWeight: '500', color: '#111827', marginBottom: '4px' }}>
+                      <div className="audit-regulation-title">
                         {reg.titre}
                       </div>
-                      <div style={{ fontSize: '0.875rem', color: '#6b7280', lineHeight: '1.4' }}>
+                      <div className="audit-regulation-description">
                         {reg.exigence?.substring(0, 100)}
                         {reg.exigence?.length > 100 && '...'}
                       </div>
                       {reg.chapitre && (
-                        <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px' }}>
+                        <div className="audit-regulation-chapter">
                           Ch. {reg.chapitre} {reg.sous_chapitre && `- ${reg.sous_chapitre}`}
                         </div>
                       )}
                     </div>
                   </td>
-                  <td style={styles.td}>
-                    <span style={{
-                      backgroundColor: '#dbeafe',
-                      color: '#1e40af',
-                      padding: '4px 8px',
-                      borderRadius: '9999px',
-                      fontSize: '0.75rem',
-                      fontWeight: '500'
-                    }}>
+                  <td>
+                    <span className="audit-domain-badge">
                       {reg.domaine}
                     </span>
                   </td>
-                  <td style={styles.td}>
+                  <td>
                     <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
                       {reg.chapitre || '-'}
                     </span>
                   </td>
-                  <td style={styles.td}>
-                    <span style={{
-                      ...styles.statusBadge,
-                      ...getStatusColor(reg.conformite)
-                    }}>
+                  <td>
+                    <span className={`audit-status-badge ${getStatusClass(reg.conformite)}`}>
                       {reg.conformite || 'Non audité'}
                     </span>
                   </td>
-                  <td style={styles.td}>
+                  <td>
                     {reg.risque ? (
-                      <span style={{
-                        ...styles.statusBadge,
-                        ...getRiskColor(reg.risque)
-                      }}>
+                      <span className={`audit-risk-badge ${getRiskClass(reg.risque)}`}>
                         {reg.risque}
                       </span>
                     ) : (
                       <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>-</span>
                     )}
                   </td>
-                  <td style={styles.td}>
+                  <td>
                     {reg.owner ? (
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div style={{
-                          width: '24px',
-                          height: '24px',
-                          backgroundColor: '#3b82f6',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          fontSize: '0.75rem',
-                          fontWeight: '500',
-                          marginRight: '8px'
-                        }}>
+                      <div className="audit-user-avatar">
+                        <div className="audit-user-avatar-circle">
                           {reg.owner.charAt(0).toUpperCase()}
                         </div>
-                        <span style={{ fontSize: '0.875rem' }}>{reg.owner}</span>
+                        <span className="audit-user-name">{reg.owner}</span>
                       </div>
                     ) : (
                       <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>Non assigné</span>
                     )}
                   </td>
-                  <td style={styles.td}>
+                  <td>
                     {reg.deadline ? (
                       <span style={{ fontSize: '0.875rem' }}>
                         {new Date(reg.deadline).toLocaleDateString()}
@@ -659,10 +505,11 @@ const AuditDashboard = () => {
                       <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>-</span>
                     )}
                   </td>
-                  <td style={styles.td}>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                  <td>
+                    <div className="audit-actions">
                       <button
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           setEditingAudit(reg.id);
                           setAuditForm({
@@ -674,37 +521,11 @@ const AuditDashboard = () => {
                             owner: reg.owner || ''
                           });
                         }}
-                        style={{
-                          color: '#2563eb',
-                          background: 'none',
-                          border: 'none',
-                          padding: '4px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#dbeafe'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                        className="audit-action-button edit"
                       >
                         <Edit size={16} />
                       </button>
-                      <button
-                        style={{
-                          color: '#6b7280',
-                          background: 'none',
-                          border: 'none',
-                          padding: '4px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                      >
+                      <button className="audit-action-button view">
                         <Eye size={16} />
                       </button>
                     </div>
@@ -716,63 +537,56 @@ const AuditDashboard = () => {
         </div>
         
         {filteredRegulations.length === 0 && (
-          <div style={{
-            textAlign: 'center',
-            padding: '3rem',
-            color: '#6b7280'
-          }}>
-            <FileText size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-            <p>Aucune réglementation trouvée</p>
-            <p style={{ fontSize: '0.875rem' }}>
+          <div className="audit-empty-state">
+            <FileText size={48} className="audit-empty-icon" />
+            <p className="audit-empty-title">Aucune réglementation trouvée</p>
+            <p className="audit-empty-description">
               Essayez de modifier vos critères de recherche
             </p>
           </div>
         )}
       </div>
 
-      {/* Audit Form Modal - Version corrigée */}
+      {/* Audit Form Modal */}
       {editingAudit && (
         <div 
-          style={styles.modal}
+          className="audit-modal"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setEditingAudit(null);
+              resetAuditForm();
             }
           }}
         >
           <div 
-            style={styles.modalContent}
+            className="audit-modal-content"
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: '600' }}>Audit de Conformité</h3>
+            <div className="audit-modal-header">
+              <h3 className="audit-modal-title">Audit de Conformité</h3>
               <button
-                onClick={() => setEditingAudit(null)}
-                style={{
-                  color: '#9ca3af',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px'
+                onClick={() => {
+                  setEditingAudit(null);
+                  resetAuditForm();
                 }}
+                className="audit-modal-close"
               >
                 <X size={24} />
               </button>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
-                    Conformité
-                  </label>
+            <div className="audit-modal-body">
+              <div className="audit-modal-row">
+                <div className="audit-form-group">
+                  <label className="audit-form-label">Conformité</label>
                   <select
                     value={auditForm.conformite}
                     onChange={(e) => {
                       e.stopPropagation();
-                      setAuditForm({...auditForm, conformite: e.target.value});
+                      handleInputChange('conformite', e.target.value);
                     }}
-                    style={styles.input}
+                    className="audit-input"
+                    onClick={(e) => e.stopPropagation()}
                     onFocus={(e) => e.stopPropagation()}
                   >
                     <option value="">Sélectionner...</option>
@@ -782,17 +596,16 @@ const AuditDashboard = () => {
                   </select>
                 </div>
                 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
-                    Risque
-                  </label>
+                <div className="audit-form-group">
+                  <label className="audit-form-label">Risque</label>
                   <select
                     value={auditForm.risque}
                     onChange={(e) => {
                       e.stopPropagation();
-                      setAuditForm({...auditForm, risque: e.target.value});
+                      handleInputChange('risque', e.target.value);
                     }}
-                    style={styles.input}
+                    className="audit-input"
+                    onClick={(e) => e.stopPropagation()}
                     onFocus={(e) => e.stopPropagation()}
                   >
                     <option value="">Sélectionner...</option>
@@ -803,94 +616,84 @@ const AuditDashboard = () => {
                 </div>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
-                    Faisabilité
-                  </label>
+              <div className="audit-modal-row">
+                <div className="audit-form-group">
+                  <label className="audit-form-label">Faisabilité</label>
                   <select
                     value={auditForm.faisabilite}
                     onChange={(e) => {
                       e.stopPropagation();
-                      setAuditForm({...auditForm, faisabilite: e.target.value});
+                      handleInputChange('faisabilite', e.target.value);
                     }}
-                    style={styles.input}
+                    className="audit-input"
+                    onClick={(e) => e.stopPropagation()}
                     onFocus={(e) => e.stopPropagation()}
                   >
                     <option value="">Sélectionner...</option>
                     <option value="Facile">Facile</option>
-                    <option value="Moyenne">Moyenne</option>
+                    <option value="Moyen">Moyenne</option>
                     <option value="Difficile">Difficile</option>
                   </select>
                 </div>
                 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
-                    Échéance
-                  </label>
+                <div className="audit-form-group">
+                  <label className="audit-form-label">Échéance</label>
                   <input
                     type="date"
                     value={auditForm.deadline}
                     onChange={(e) => {
                       e.stopPropagation();
-                      setAuditForm({...auditForm, deadline: e.target.value});
+                      handleInputChange('deadline', e.target.value);
                     }}
-                    style={styles.input}
+                    className="audit-input"
+                    onClick={(e) => e.stopPropagation()}
                     onFocus={(e) => e.stopPropagation()}
                   />
                 </div>
               </div>
               
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
-                  Responsable
-                </label>
+              <div className="audit-form-group">
+                <label className="audit-form-label">Responsable</label>
                 <input
                   type="text"
                   value={auditForm.owner}
                   onChange={(e) => {
                     e.stopPropagation();
-                    setAuditForm({...auditForm, owner: e.target.value});
+                    handleInputChange('owner', e.target.value);
                   }}
                   placeholder="Nom du responsable"
-                  style={styles.input}
+                  className="audit-input"
+                  onClick={(e) => e.stopPropagation()}
                   onFocus={(e) => e.stopPropagation()}
                 />
               </div>
               
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
-                  Plan d'action
-                </label>
+              <div className="audit-form-group">
+                <label className="audit-form-label">Plan d'action</label>
                 <textarea
                   value={auditForm.plan_action}
                   onChange={(e) => {
                     e.stopPropagation();
-                    setAuditForm({...auditForm, plan_action: e.target.value});
+                    handleInputChange('plan_action', e.target.value);
                   }}
                   placeholder="Décrivez le plan d'action..."
                   rows={4}
-                  style={{ ...styles.input, resize: 'vertical', minHeight: '100px' }}
+                  className="audit-input audit-textarea"
+                  onClick={(e) => e.stopPropagation()}
                   onFocus={(e) => e.stopPropagation()}
                 />
               </div>
             </div>
             
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '1.5rem' }}>
+            <div className="audit-modal-footer">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setEditingAudit(null);
                   resetAuditForm();
                 }}
-                style={{
-                  padding: '8px 16px',
-                  color: '#6b7280',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  backgroundColor: 'white',
-                  cursor: 'pointer'
-                }}
+                disabled={isSaving}
+                className="audit-button secondary"
               >
                 Annuler
               </button>
@@ -898,90 +701,46 @@ const AuditDashboard = () => {
                 onClick={async (e) => {
                   e.stopPropagation();
                   
-                  // Validation simple
                   if (!auditForm.conformite) {
-                    alert('⚠️ Veuillez sélectionner une conformité');
+                    alert('Veuillez sélectionner une conformité');
                     return;
                   }
                   
-                  // Désactiver le bouton pendant la sauvegarde
-                  e.target.disabled = true;
-                  e.target.style.opacity = '0.6';
-                  e.target.innerHTML = '⏳ Sauvegarde...';
-                  
-                  try {
-                    await saveAudit(editingAudit, auditForm);
-                  } finally {
-                    // Réactiver le bouton (si le modal n'est pas fermé)
-                    if (e.target) {
-                      e.target.disabled = false;
-                      e.target.style.opacity = '1';
-                      e.target.innerHTML = '💾 Sauvegarder';
-                    }
-                  }
+                  await saveAudit(editingAudit, auditForm);
                 }}
-                style={{
-                  ...styles.button,
-                  ...styles.buttonPrimary
-                }}
+                disabled={isSaving}
+                className="audit-button primary"
               >
                 <Save size={16} />
-                Sauvegarder
+                {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  );
+  ));
 
   return (
-    <div style={styles.container}>
-      {/* CSS pour les animations */}
-      <style>
-        {`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          
-          .hover-row:hover {
-            background-color: #f9fafb !important;
-          }
-          
-          .hover-button:hover {
-            opacity: 0.8;
-            transform: translateY(-1px);
-          }
-        `}
-      </style>
-      
+    <div className="audit-dashboard">
       {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.headerContent}>
+      <header className="audit-header">
+        <div className="audit-header-content">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <h1 style={styles.title}>
-              🚀 Audit Réglementaire
-            </h1>
-            <span style={styles.badge}>v2.0.0</span>
+            <h1 className="audit-title">Audit Réglementaire</h1>
+            <span className="audit-badge">v2.0.0</span>
           </div>
           
-          <nav style={styles.nav}>
+          <nav className="audit-nav">
             <button
               onClick={() => setActiveTab('dashboard')}
-              style={{
-                ...styles.navButton,
-                ...(activeTab === 'dashboard' ? styles.navButtonActive : styles.navButtonInactive)
-              }}
+              className={`audit-nav-button ${activeTab === 'dashboard' ? 'active' : 'inactive'}`}
             >
               Dashboard
             </button>
             <button
               onClick={() => setActiveTab('regulations')}
-              style={{
-                ...styles.navButton,
-                ...(activeTab === 'regulations' ? styles.navButtonActive : styles.navButtonInactive)
-              }}
+              className={`audit-nav-button ${activeTab === 'regulations' ? 'active' : 'inactive'}`}
             >
               Réglementations
             </button>
@@ -990,10 +749,10 @@ const AuditDashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main style={styles.main}>
+      <main className="audit-main">
         {loading ? (
-          <div style={styles.loading}>
-            <div style={styles.spinner}></div>
+          <div className="audit-loading">
+            <div className="audit-spinner"></div>
           </div>
         ) : (
           <>

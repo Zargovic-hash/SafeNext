@@ -12,6 +12,7 @@ export const pool = new Pool({
   port: Number(process.env.PG_PORT),
   database: String(process.env.PG_DATABASE)
 });
+console.log("PG_HOST:", process.env.PG_HOST);
 
 // Fermeture propre du pool
 process.on("SIGINT", async () => {
