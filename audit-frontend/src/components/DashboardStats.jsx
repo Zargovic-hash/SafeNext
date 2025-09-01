@@ -69,12 +69,12 @@ const DomainsChart = ({ data }) => (
   <div className="audit-card">
     <h3 className="audit-chart-title">Audits par Domaine</h3>
     <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data?.slice(0, 8) || []}>
+      <BarChart data={data?.slice(0, 10) || []}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="domaine" angle={-45} textAnchor="end" height={80} />
+        <XAxis dataKey="domaine" angle={-45} textAnchor="end" height={100} />
         <YAxis />
         <Tooltip />
-        <Bar dataKey="audites" fill={COLORS.primary} radius={[4, 4, 0, 0]} />
+        <Bar dataKey="audites" fill={COLORS.primary} radius={[, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   </div>
