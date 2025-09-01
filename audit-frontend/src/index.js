@@ -9,6 +9,3 @@ root.render(
     <App />
   </React.StrictMode>
 );
-
-// Supprimez complètement cette ligne qui cause l'erreur :
-// reportWebVitals();
