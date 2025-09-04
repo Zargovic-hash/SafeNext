@@ -1,17 +1,21 @@
+// src/AuditDashboard.js - Version hybride avec toggle
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardStats from './components/DashboardStats.jsx';
 import RegulationsTable from './components/RegulationsTable.jsx';
 import AuditModal from './components/AuditModal.jsx';
 import SearchFilters from './components/SearchFilters';
+import ModernAuditDashboard from './components/modern/ModernAuditDashboard.jsx';  // Nouveau composant
 import { useDebounce } from './hooks/useDebounce';
 import { useAuditData } from './hooks/useAuditData.js';
 import './styles/AuditDashboard.css';
+import './styles/modern.css';
 
 const AuditDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('');
   const [editingAudit, setEditingAudit] = useState(null);
+  const [useModernUI, setUseModernUI] = useState(false); // Toggle pour l'interface
   const [auditForm, setAuditForm] = useState({
     conformite: '',
     risque: '',
@@ -82,7 +86,15 @@ const AuditDashboard = () => {
   }, []);
 
   const handleExportCSV = useCallback(() => {
-    const csvData = filteredRegulations.map(reg => ({
+    // Vérifier que filteredRegulations est un tableau
+    const regulations = Array.isArray(filteredRegulations) ? filteredRegulations : [];
+    
+    if (regulations.length === 0) {
+      alert('Aucune donnée à exporter');
+      return;
+    }
+
+    const csvData = regulations.map(reg => ({
       'Titre': reg.titre || '',
       'Domaine': reg.domaine || '',
       'Chapitre': reg.chapitre || '',
@@ -106,14 +118,44 @@ const AuditDashboard = () => {
     link.click();
   }, [filteredRegulations]);
 
+  // Si l'interface moderne est activée, utiliser le nouveau composant
+  if (useModernUI) {
+    return (
+      <ModernAuditDashboard 
+        dashboardStats={dashboardStats}
+        regulations={Array.isArray(filteredRegulations) ? filteredRegulations : []}
+        loading={loading}
+        onToggleUI={() => setUseModernUI(false)}
+        onEditAudit={handleEditAudit}
+        onExportCSV={handleExportCSV}
+      />
+    );
+  }
+
+  // Interface classique existante
   return (
     <div className="audit-dashboard">
-      {/* Header */}
+      {/* Header avec bouton de toggle */}
       <header className="audit-header">
         <div className="audit-header-content">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <h1 className="audit-title">Audit Réglementaire</h1>
             <span className="audit-badge">v2.0.0</span>
+            <button
+              onClick={() => setUseModernUI(true)}
+              style={{ 
+                padding: '0.5rem 1rem',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: '500'
+              }}
+            >
+              ✨ Interface moderne
+            </button>
           </div>
           
           <nav className="audit-nav">
@@ -157,11 +199,11 @@ const AuditDashboard = () => {
                   onDomainChange={setSelectedDomain}
                   domains={domains}
                   onExport={handleExportCSV}
-                  resultsCount={filteredRegulations.length}
+                  resultsCount={Array.isArray(filteredRegulations) ? filteredRegulations.length : 0}
                 />
                 
                 <RegulationsTable
-                  regulations={filteredRegulations}
+                  regulations={Array.isArray(filteredRegulations) ? filteredRegulations : []}
                   onEditAudit={handleEditAudit}
                 />
               </div>
