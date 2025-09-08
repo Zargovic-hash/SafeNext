@@ -1,17 +1,26 @@
+// app.js (VERSION MISE À JOUR)
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import reglementationRoutes from "./routes/reglementation.js";
 import auditRoutes from "./routes/audit.js";
-import dashboardRoutes from "./routes/dashboard.js"; // ← Nouvelle route
+import dashboardRoutes from "./routes/dashboard.js";
+import authRoutes from "./routes/auth.js";
+import usersRoutes from "./routes/users.js";
 import { pool } from "./db.js";
 
 dotenv.config();
 const app = express();
 
+// Vérification des variables d'environnement critiques
+if (!process.env.JWT_SECRET) {
+  console.error("❌ JWT_SECRET n'est pas défini dans les variables d'environnement");
+  process.exit(1);
+}
+
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' })); // Augmenté pour les exports
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middleware de logging
@@ -21,6 +30,8 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.use("/api/auth", authRoutes);           // 🔐 Authentification
+app.use("/api/users", usersRoutes);         // 👥 Gestion des utilisateurs (Admin)
 app.use("/api/reglementation", reglementationRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/dashboard", dashboardRoutes);
@@ -28,10 +39,13 @@ app.use("/api/dashboard", dashboardRoutes);
 // Route test avec informations système
 app.get("/", (req, res) => {
   res.json({
-    message: "🚀 API Audit Réglementaire",
-    version: "2.0.0",
+    message: "🚀 API Audit Réglementaire v2.1",
+    version: "2.1.0",
     timestamp: new Date().toISOString(),
+    features: ["Multi-utilisateurs", "Authentification JWT", "Gestion des permissions"],
     endpoints: {
+      auth: "/api/auth",
+      users: "/api/users",
       reglementation: "/api/reglementation",
       audit: "/api/audit", 
       dashboard: "/api/dashboard"
@@ -81,4 +95,16 @@ pool.connect()
   .catch((err) => console.error("❌ Database connection error:", err.stack));
 
 const port = process.env.PORT || 3001;
-app.listen(port, () => console.log(`🚀 Server running on http://localhost:${port}`));
+app.listen(port, () => {
+  console.log(`🚀 Server running on http://localhost:${port}`);
+  console.log("📋 Available endpoints:");
+  console.log("  🔐 POST /api/auth/register - Inscription");
+  console.log("  🔐 POST /api/auth/login - Connexion");
+  console.log("  👤 GET /api/auth/profile - Profil utilisateur");
+  console.log("  👥 GET /api/users - Gestion utilisateurs (Admin)");
+  console.log("  📊 GET /api/dashboard/stats - Statistiques");
+  console.log("  📋 GET /api/audit - Mes audits");
+  console.log("  📄 GET /api/reglementation - Réglementations");
+});
+
+export default app;

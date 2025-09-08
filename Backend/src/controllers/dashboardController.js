@@ -1,73 +1,104 @@
+// controllers/dashboardController.js (VERSION MISE À JOUR)
 import { pool } from "../db.js";
 
-// 📊 Dashboard avec statistiques complètes
+// 📊 Dashboard avec statistiques complètes (adapté aux permissions)
 export const getDashboardStats = async (req, res) => {
   try {
+    const user_id = req.user.id;
+    const isAdmin = req.user.role === 'admin';
+
+    // Filtres selon les permissions
+    const userFilter = isAdmin ? '' : 'WHERE a.user_id = $1';
+    const userValues = isAdmin ? [] : [user_id];
+
     // Statistiques générales
     const totalReglementations = await pool.query('SELECT COUNT(*) as total FROM reglementation_all');
-    const totalAudits = await pool.query('SELECT COUNT(*) as total FROM audit_conformite');
+    
+    const totalAuditsQuery = isAdmin 
+      ? 'SELECT COUNT(*) as total FROM audit_conformite'
+      : 'SELECT COUNT(*) as total FROM audit_conformite WHERE user_id = $1';
+    const totalAudits = await pool.query(totalAuditsQuery, userValues);
     
     // Répartition par conformité
-    const conformiteStats = await pool.query(`
+    const conformiteQuery = `
       SELECT conformite, COUNT(*) as count 
-      FROM audit_conformite 
-      WHERE conformite IS NOT NULL
+      FROM audit_conformite a
+      ${userFilter}
+      ${isAdmin ? 'WHERE' : 'AND'} conformite IS NOT NULL
       GROUP BY conformite
-    `);
+    `;
+    const conformiteStats = await pool.query(
+      conformiteQuery, 
+      isAdmin ? [] : [...userValues]
+    );
 
     // Répartition par risque
-    const risqueStats = await pool.query(`
+    const risqueQuery = `
       SELECT risque, COUNT(*) as count 
-      FROM audit_conformite 
-      WHERE risque IS NOT NULL
+      FROM audit_conformite a
+      ${userFilter}
+      ${isAdmin ? 'WHERE' : 'AND'} risque IS NOT NULL
       GROUP BY risque
-    `);
+    `;
+    const risqueStats = await pool.query(
+      risqueQuery, 
+      isAdmin ? [] : [...userValues]
+    );
 
     // Répartition par domaine
-    const domaineStats = await pool.query(`
+    const domaineQuery = `
       SELECT r.domaine, 
              COUNT(*) as total,
              COUNT(a.id) as audites,
              COUNT(CASE WHEN a.conformite = 'Conforme' THEN 1 END) as conformes,
              COUNT(CASE WHEN a.conformite = 'Non Conforme' THEN 1 END) as non_conformes
       FROM reglementation_all r
-      LEFT JOIN audit_conformite a ON r.id = a.reglementation_id
+      LEFT JOIN audit_conformite a ON r.id = a.reglementation_id ${isAdmin ? '' : 'AND a.user_id = $1'}
       GROUP BY r.domaine
       ORDER BY total DESC
-    `);
-
-    // Audits par responsable
-    const ownerStats = await pool.query(`
-      SELECT owner, COUNT(*) as count,
-             COUNT(CASE WHEN conformite = 'Conforme' THEN 1 END) as conformes,
-             COUNT(CASE WHEN conformite = 'Non Conforme' THEN 1 END) as non_conformes
-      FROM audit_conformite 
-      WHERE owner IS NOT NULL AND owner != ''
-      GROUP BY owner
-      ORDER BY count DESC
-      LIMIT 10
-    `);
+    `;
+    const domaineStats = await pool.query(domaineQuery, userValues);
 
     // Échéances proches (30 jours)
-    const echeancesProches = await pool.query(`
+    const echeancesQuery = `
       SELECT r.titre, r.domaine, a.deadline, a.owner, a.conformite
       FROM audit_conformite a
       JOIN reglementation_all r ON a.reglementation_id = r.id
       WHERE a.deadline BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'
       AND a.conformite != 'Conforme'
+      ${isAdmin ? '' : 'AND a.user_id = $1'}
       ORDER BY a.deadline ASC
-    `);
+    `;
+    const echeancesProches = await pool.query(echeancesQuery, userValues);
 
     // Évolution mensuelle des audits
-    const evolutionMensuelle = await pool.query(`
+    const evolutionQuery = `
       SELECT 
         DATE_TRUNC('month', created_at) as mois,
         COUNT(*) as nouveaux_audits
       FROM audit_conformite
       WHERE created_at >= CURRENT_DATE - INTERVAL '12 months'
+      ${isAdmin ? '' : 'AND user_id = $1'}
       GROUP BY DATE_TRUNC('month', created_at)
       ORDER BY mois DESC
-    `);
+    `;
+    const evolutionMensuelle = await pool.query(evolutionQuery, userValues);
+
+    // Statistiques utilisateur spécifiques (pour les non-admins)
+    let userSpecificStats = {};
+    if (!isAdmin) {
+      const userStatsQuery = `
+        SELECT 
+          COUNT(*) as mes_audits,
+          COUNT(CASE WHEN conformite = 'Conforme' THEN 1 END) as mes_conformes,
+          COUNT(CASE WHEN conformite = 'Non Conforme' THEN 1 END) as mes_non_conformes,
+          COUNT(CASE WHEN deadline < CURRENT_DATE AND conformite != 'Conforme' THEN 1 END) as en_retard
+        FROM audit_conformite 
+        WHERE user_id = $1
+      `;
+      const userStats = await pool.query(userStatsQuery, [user_id]);
+      userSpecificStats = userStats.rows[0];
+    }
 
     res.json({
       totaux: {
@@ -80,9 +111,9 @@ export const getDashboardStats = async (req, res) => {
       conformite: conformiteStats.rows,
       risque: risqueStats.rows,
       domaines: domaineStats.rows,
-      responsables: ownerStats.rows,
       echeances_proches: echeancesProches.rows,
-      evolution: evolutionMensuelle.rows
+      evolution: evolutionMensuelle.rows,
+      ...(isAdmin ? {} : { user_stats: userSpecificStats })
     });
 
   } catch (err) {
@@ -91,14 +122,26 @@ export const getDashboardStats = async (req, res) => {
   }
 };
 
-// 📈 Rapport d'audit détaillé
+// 📈 Rapport d'audit détaillé (adapté aux permissions)
 export const getAuditReport = async (req, res) => {
   try {
-    const { domaine, owner, conformite, date_debut, date_fin } = req.query;
+    const { domaine, owner, conformite, date_debut, date_fin, user_id_filter } = req.query;
+    const current_user_id = req.user.id;
+    const isAdmin = req.user.role === 'admin';
     
     let filters = [];
     let values = [];
     let index = 1;
+
+    // Pour les non-admins, filtrer automatiquement par leur user_id
+    if (!isAdmin) {
+      filters.push(`a.user_id = $${index++}`);
+      values.push(current_user_id);
+    } else if (user_id_filter) {
+      // Les admins peuvent filtrer par utilisateur spécifique
+      filters.push(`a.user_id = $${index++}`);
+      values.push(user_id_filter);
+    }
 
     if (domaine) {
       filters.push(`r.domaine = $${index++}`);
@@ -131,9 +174,11 @@ export const getAuditReport = async (req, res) => {
       SELECT 
         r.id, r.domaine, r.chapitre, r.sous_chapitre, r.titre, r.exigence,
         a.conformite, a.risque, a.faisabilite, a.plan_action, a.deadline, a.owner,
-        a.created_at, a.updated_at
+        a.created_at, a.updated_at, a.user_id,
+        u.first_name, u.last_name, u.email as user_email
       FROM reglementation_all r
       JOIN audit_conformite a ON r.id = a.reglementation_id
+      LEFT JOIN users u ON a.user_id = u.id
       ${whereClause}
       ORDER BY a.updated_at DESC
     `;
@@ -147,12 +192,13 @@ export const getAuditReport = async (req, res) => {
   }
 };
 
-// 🔄 Sauvegarde en lot
+// 📄 Sauvegarde en lot (modifiée pour inclure l'utilisateur)
 export const bulkSaveAudits = async (req, res) => {
   const client = await pool.connect();
   
   try {
     const { audits } = req.body; // Array d'audits
+    const user_id = req.user.id;
     
     if (!Array.isArray(audits) || audits.length === 0) {
       return res.status(400).json({ error: "Données invalides" });
@@ -169,8 +215,8 @@ export const bulkSaveAudits = async (req, res) => {
 
       const sql = `
         INSERT INTO audit_conformite
-          (reglementation_id, conformite, risque, faisabilite, plan_action, deadline, owner, created_at, updated_at)
-        VALUES ($1,$2,$3,$4,$5,$6,$7, NOW(), NOW())
+          (reglementation_id, conformite, risque, faisabilite, plan_action, deadline, owner, user_id, created_at, updated_at)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8, NOW(), NOW())
         ON CONFLICT (reglementation_id)
         DO UPDATE SET 
           conformite = EXCLUDED.conformite,
@@ -179,6 +225,7 @@ export const bulkSaveAudits = async (req, res) => {
           plan_action = EXCLUDED.plan_action,
           deadline = EXCLUDED.deadline,
           owner = EXCLUDED.owner,
+          user_id = EXCLUDED.user_id,
           updated_at = NOW()
         RETURNING *;
       `;
@@ -190,7 +237,8 @@ export const bulkSaveAudits = async (req, res) => {
         faisabilite || null,
         plan_action || null,
         deadline || null,
-        owner || null
+        owner || null,
+        user_id
       ]);
 
       results.push(result.rows[0]);
@@ -208,22 +256,30 @@ export const bulkSaveAudits = async (req, res) => {
   }
 };
 
-// 📤 Export des données
+// 📤 Export des données (adapté aux permissions)
 export const exportAudits = async (req, res) => {
   try {
     const { format = 'csv', domaine, conformite } = req.query;
+    const user_id = req.user.id;
+    const isAdmin = req.user.role === 'admin';
     
     let filters = [];
     let values = [];
     let index = 1;
 
+    // Pour les non-admins, filtrer par leur user_id
+    if (!isAdmin) {
+      filters.push(`a.user_id = $${index++}`);
+      values.push(user_id);
+    }
+
     if (domaine) {
-      filters.push(`r.domaine = ${index++}`);
+      filters.push(`r.domaine = $${index++}`);
       values.push(domaine);
     }
     
     if (conformite) {
-      filters.push(`a.conformite = ${index++}`);
+      filters.push(`a.conformite = $${index++}`);
       values.push(conformite);
     }
 
@@ -242,10 +298,12 @@ export const exportAudits = async (req, res) => {
         a.plan_action as "Plan d'Action",
         a.deadline as "Échéance",
         a.owner as "Responsable",
+        ${isAdmin ? 'CONCAT(u.first_name, \' \', u.last_name) as "Auditeur",' : ''}
         a.created_at as "Date Création",
         a.updated_at as "Dernière Modification"
       FROM reglementation_all r
       LEFT JOIN audit_conformite a ON r.id = a.reglementation_id
+      ${isAdmin ? 'LEFT JOIN users u ON a.user_id = u.id' : ''}
       ${whereClause}
       ORDER BY r.domaine, r.chapitre, r.sous_chapitre
     `;

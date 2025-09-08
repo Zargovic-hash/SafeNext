@@ -1,7 +1,12 @@
+// routes/dashboard.js (VERSION MISE À JOUR)
 import express from "express";
 import { getDashboardStats, getAuditReport, bulkSaveAudits, exportAudits } from "../controllers/dashboardController.js";
+import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
+
+// Toutes les routes nécessitent une authentification
+router.use(authenticateToken);
 
 // GET /api/dashboard/stats - Statistiques générales
 router.get("/stats", getDashboardStats);
