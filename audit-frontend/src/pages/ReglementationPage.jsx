@@ -11,6 +11,12 @@ import SearchIcon from '../icons/SearchIcon';
 import DocumentIcon from '../icons/DocumentIcon';
 import XIcon from '../icons/XIcon';
 import Sidebar from '../components/Sidebar';
+import AuditModal from '../components/AuditModal.jsx'; 
+
+
+
+
+
 
 // Composants manquants créés dans l'esprit shadcn/ui
 const GridIcon = ({ className = "h-5 w-5" }) => (
@@ -799,6 +805,27 @@ const ReglementationPage = () => {
                       </div>
                     </motion.div>
                   )}
+
+                  {/* Références légales */}
+                  {auditingRegulation.documents && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                      className="space-y-3"
+                    >
+                      <Label className="text-sm font-semibold text-gray-700 flex items-center space-x-2">
+                        <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+                        <span>Preuve documentaire</span>
+                      </Label>
+                      <div className="p-6 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 rounded-xl border border-amber-100">
+                        <p className="text-gray-800 leading-relaxed text-sm">
+                          {auditingRegulation.documents}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+
 
                   {/* Statut actuel */}
                   {auditingRegulation.conformite && (
