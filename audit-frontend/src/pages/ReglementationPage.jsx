@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -11,12 +11,7 @@ import SearchIcon from '../icons/SearchIcon';
 import DocumentIcon from '../icons/DocumentIcon';
 import XIcon from '../icons/XIcon';
 import Sidebar from '../components/Sidebar';
-import AuditModal from '../components/AuditModal.jsx'; 
-
-
-
-
-
+import AuditModal from '../components/AuditModal.jsx';
 
 // Composants manquants créés dans l'esprit shadcn/ui
 const GridIcon = ({ className = "h-5 w-5" }) => (
@@ -89,7 +84,19 @@ const ReglementationPage = () => {
   const [viewMode, setViewMode] = useState('cards');
   const [auditingRegulation, setAuditingRegulation] = useState(null);
   const [showAuditModal, setShowAuditModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState(null);
   const { token } = useAuth();
+
+  // État pour le formulaire d'audit
+  const [auditForm, setAuditForm] = useState({
+    conformite: '',
+    risque: '',
+    faisabilite: '',
+    deadline: '',
+    owner: '',
+    plan_action: ''
+  });
 
   const API_BASE = 'http://localhost:3001/api';
 
@@ -152,10 +159,103 @@ const ReglementationPage = () => {
     return acc;
   }, {});
 
-  const handleStartAudit = (regulation) => {
+  // Fonction pour gérer les changements dans le formulaire d'audit
+  const handleAuditInputChange = useCallback((field, value) => {
+    setAuditForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
+
+  // Fonction pour démarrer l'audit
+  const handleStartAudit = useCallback((regulation) => {
     setAuditingRegulation(regulation);
+    // Pré-remplir le formulaire avec les données existantes si disponibles
+    setAuditForm({
+      conformite: regulation.conformite || '',
+      risque: regulation.risque || '',
+      faisabilite: regulation.faisabilite || '',
+      deadline: regulation.deadline || '',
+      owner: regulation.owner || '',
+      plan_action: regulation.plan_action || ''
+    });
     setShowAuditModal(true);
-  };
+  }, []);
+
+  // Fonction pour sauvegarder l'audit
+  const handleSaveAudit = useCallback(async () => {
+    if (!auditingRegulation || !token) return;
+
+    try {
+      setIsSaving(true);
+      setSaveMessage(null);
+
+      // Corriger l'URL - utiliser la route /audit au lieu de /reglementation/{id}/audit
+      const response = await fetch(`${API_BASE}/audit`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reglementation_id: auditingRegulation.id,
+          ...auditForm
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Erreur HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // Mettre à jour la réglementation dans la liste avec les données d'audit
+      setRegulations(prev => 
+        prev.map(reg => 
+          reg.id === auditingRegulation.id ? { ...reg, ...auditForm } : reg
+        )
+      );
+
+      // Afficher un message de succès
+      setSaveMessage({ type: 'success', text: 'Audit sauvegardé avec succès !' });
+
+      // Fermer la modal après un délai
+      setTimeout(() => {
+        setShowAuditModal(false);
+        setAuditingRegulation(null);
+        setAuditForm({
+          conformite: '',
+          risque: '',
+          faisabilite: '',
+          deadline: '',
+          owner: '',
+          plan_action: ''
+        });
+        setSaveMessage(null);
+      }, 1500);
+
+    } catch (err) {
+      console.error('Erreur lors de la sauvegarde de l\'audit:', err);
+      setSaveMessage({ type: 'error', text: `Erreur: ${err.message}` });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [auditingRegulation, token, auditForm]);
+
+  // Fonction pour fermer la modal
+  const handleCloseAuditModal = useCallback(() => {
+    setShowAuditModal(false);
+    setAuditingRegulation(null);
+    setAuditForm({
+      conformite: '',
+      risque: '',
+      faisabilite: '',
+      deadline: '',
+      owner: '',
+      plan_action: ''
+    });
+  }, []);
 
   // Loading state amélioré
   if (loading) {
@@ -685,233 +785,40 @@ const ReglementationPage = () => {
         </div>
       </div>
 
-      {/* Modal d'audit améliorée */}
-      <AnimatePresence>
-        {showAuditModal && auditingRegulation && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            onClick={() => setShowAuditModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="bg-white/95 backdrop-blur-sm rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border-0"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-8">
-                {/* Header de la modal */}
-                <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-100">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center">
-                      <DocumentIcon className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900">
-                        Audit de réglementation
-                      </h2>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Évaluation de conformité réglementaire
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowAuditModal(false)}
-                    className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105"
-                  >
-                    <XIcon className="h-6 w-6 text-gray-500" />
-                  </button>
-                </div>
-                
-                {/* Contenu de la modal */}
-                <div className="space-y-6">
-                  {/* Informations générales */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 }}
-                      className="space-y-3"
-                    >
-                      <Label className="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-                        <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                        <span>Titre</span>
-                      </Label>
-                      <div className="p-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 rounded-xl border border-blue-100">
-                        <p className="text-gray-900 font-medium leading-relaxed">
-                          {auditingRegulation.titre}
-                        </p>
-                      </div>
-                    </motion.div>
-                    
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 }}
-                      className="space-y-3"
-                    >
-                      <Label className="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-                        <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-                        <span>Domaine</span>
-                      </Label>
-                      <div className="p-4 bg-gradient-to-r from-purple-50/50 to-pink-50/50 rounded-xl border border-purple-100">
-                        <StatusBadge status="info" className="text-sm">
-                          {auditingRegulation.domaine}
-                        </StatusBadge>
-                      </div>
-                    </motion.div>
-                  </div>
-                  
-                  {/* Exigence */}
-                  {auditingRegulation.exigence && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="space-y-3"
-                    >
-                      <Label className="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-                        <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                        <span>Exigence réglementaire</span>
-                      </Label>
-                      <div className="p-6 bg-gradient-to-r from-green-50/50 to-emerald-50/50 rounded-xl border border-green-100">
-                        <p className="text-gray-800 leading-relaxed text-sm">
-                          {auditingRegulation.exigence}
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
+      {/* Message de sauvegarde */}
+      {saveMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
+          className={`fixed bottom-6 right-6 z-50 px-6 py-4 rounded-lg shadow-lg ${
+            saveMessage.type === 'success' 
+              ? 'bg-green-500 text-white' 
+              : 'bg-red-500 text-white'
+          }`}
+        >
+          <div className="flex items-center space-x-3">
+            {saveMessage.type === 'success' ? (
+              <CheckCircleIcon className="h-5 w-5" />
+            ) : (
+              <AlertCircleIcon className="h-5 w-5" />
+            )}
+            <span className="font-medium">{saveMessage.text}</span>
+          </div>
+        </motion.div>
+      )}
 
-                  {/* Références légales */}
-                  {auditingRegulation.lois && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                      className="space-y-3"
-                    >
-                      <Label className="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-                        <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
-                        <span>Références légales</span>
-                      </Label>
-                      <div className="p-6 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 rounded-xl border border-amber-100">
-                        <p className="text-gray-800 leading-relaxed text-sm">
-                          {auditingRegulation.lois}
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Références légales */}
-                  {auditingRegulation.documents && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                      className="space-y-3"
-                    >
-                      <Label className="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-                        <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
-                        <span>Preuve documentaire</span>
-                      </Label>
-                      <div className="p-6 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 rounded-xl border border-amber-100">
-                        <p className="text-gray-800 leading-relaxed text-sm">
-                          {auditingRegulation.documents}
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-
-
-                  {/* Statut actuel */}
-                  {auditingRegulation.conformite && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                      className="space-y-3"
-                    >
-                      <Label className="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-                        <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                        <span>Statut de conformité actuel</span>
-                      </Label>
-                      <div className="p-4 bg-gradient-to-r from-gray-50/50 to-slate-50/50 rounded-xl border border-gray-100">
-                        <StatusBadge 
-                          status={auditingRegulation.conformite === 'Conforme' ? 'success' : 'danger'}
-                          className="text-sm flex items-center space-x-2"
-                        >
-                          {auditingRegulation.conformite === 'Conforme' && <CheckCircleIcon className="h-4 w-4" />}
-                          {auditingRegulation.conformite === 'Non conforme' && <AlertCircleIcon className="h-4 w-4" />}
-                          <span>{auditingRegulation.conformite}</span>
-                        </StatusBadge>
-                      </div>
-                    </motion.div>
-                  )}
-                  
-                  {/* Notice de développement */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-xl p-6"
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <svg className="h-4 w-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-semibold text-yellow-800">Fonctionnalité en développement</h4>
-                        <p className="text-sm text-yellow-700 leading-relaxed">
-                          L'interface d'audit complète sera bientôt disponible avec des formulaires d'évaluation, 
-                          la gestion des preuves de conformité, et le suivi des actions correctives.
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                  
-                  {/* Actions */}
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
-                    className="flex justify-end space-x-4 pt-6 border-t border-gray-100"
-                  >
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowAuditModal(false)}
-                      className="px-6 py-3 border-2 border-gray-300 hover:border-gray-400 transition-all duration-200"
-                    >
-                      Annuler
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        // TODO: Implémenter la logique d'audit
-                        setShowAuditModal(false);
-                      }}
-                      className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
-                    >
-                      <span className="flex items-center space-x-2">
-                        <span>Commencer l'audit</span>
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                      </span>
-                    </Button>
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Modal d'audit avec AuditModal */}
+      <AuditModal
+        isOpen={showAuditModal}
+        auditForm={auditForm}
+        onInputChange={handleAuditInputChange}
+        onSave={handleSaveAudit}
+        onClose={handleCloseAuditModal}
+        isSaving={isSaving}
+      />
     </div>
   );
 };
 
-export default ReglementationPage;
+export default ReglementationPage

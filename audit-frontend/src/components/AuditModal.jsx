@@ -1,69 +1,137 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { X, Save } from 'lucide-react';
 
-const FormGroup = ({ label, children, required = false }) => (
-  <div className="audit-form-group">
-    <label className="audit-form-label">
-      {label}
-      {required && <span className="audit-required">*</span>}
+// Composants optimisés avec React.memo et useCallback pour éviter la perte de focus
+// lors de la saisie dans les champs de formulaire
+
+// Options des selects définies en dehors du composant pour éviter la recréation
+const conformityOptions = [
+  { value: 'Conforme', label: 'Conforme' },
+  { value: 'Non Conforme', label: 'Non Conforme' },
+  { value: 'Non Applicable', label: 'Non Applicable' }
+];
+
+const riskOptions = [
+  { value: 'Faible', label: 'Faible' },
+  { value: 'Moyen', label: 'Moyen' },
+  { value: 'Élevé', label: 'Élevé' }
+];
+
+const feasibilityOptions = [
+  { value: 'Facile', label: 'Facile' },
+  { value: 'Moyen', label: 'Moyenne' },
+  { value: 'Difficile', label: 'Difficile' }
+];
+
+const FormGroup = React.memo(({ label, children, required = false }) => (
+  <div className="flex flex-col space-y-3">
+    <label className="text-sm font-semibold text-gray-700 flex items-center space-x-1">
+      <span>{label}</span>
+      {required && <span className="text-red-500 font-bold">*</span>}
     </label>
     {children}
   </div>
-);
+));
+FormGroup.displayName = 'FormGroup';
 
-const SelectField = ({ value, onChange, options, placeholder = "Sélectionner...", required = false }) => (
-  <select
-    value={value}
-    onChange={(e) => {
-      e.stopPropagation();
-      onChange(e.target.value);
-    }}
-    className={`audit-input ${required && !value ? 'audit-input-required' : ''}`}
-    onClick={(e) => e.stopPropagation()}
-    onFocus={(e) => e.stopPropagation()}
-    required={required}
-  >
-    <option value="">{placeholder}</option>
-    {options.map((option, index) => (
-      <option key={index} value={option.value}>
-        {option.label}
-      </option>
-    ))}
-  </select>
-);
+const SelectField = React.memo(({ value, onChange, options, placeholder = "Sélectionner...", required = false }) => {
+  const handleChange = useCallback((e) => {
+    e.stopPropagation();
+    onChange(e.target.value);
+  }, [onChange]);
 
-const InputField = ({ type = "text", value, onChange, placeholder, required = false, ...props }) => (
-  <input
-    type={type}
-    value={value}
-    onChange={(e) => {
-      e.stopPropagation();
-      onChange(e.target.value);
-    }}
-    placeholder={placeholder}
-    className={`audit-input ${required && !value ? 'audit-input-required' : ''}`}
-    onClick={(e) => e.stopPropagation()}
-    onFocus={(e) => e.stopPropagation()}
-    required={required}
-    {...props}
-  />
-);
+  const handleClick = useCallback((e) => {
+    e.stopPropagation();
+  }, []);
 
-const TextareaField = ({ value, onChange, placeholder, rows = 4, required = false }) => (
-  <textarea
-    value={value}
-    onChange={(e) => {
-      e.stopPropagation();
-      onChange(e.target.value);
-    }}
-    placeholder={placeholder}
-    rows={rows}
-    className={`audit-input audit-textarea ${required && !value ? 'audit-input-required' : ''}`}
-    onClick={(e) => e.stopPropagation()}
-    onFocus={(e) => e.stopPropagation()}
-    required={required}
-  />
-);
+  const handleFocus = useCallback((e) => {
+    e.stopPropagation();
+  }, []);
+
+  return (
+    <select
+      value={value}
+      onChange={handleChange}
+      className={`w-full px-4 py-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+        required && !value ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+      }`}
+      onClick={handleClick}
+      onFocus={handleFocus}
+      required={required}
+    >
+      <option value="">{placeholder}</option>
+      {options.map((option, index) => (
+        <option key={index} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+});
+SelectField.displayName = 'SelectField';
+
+const InputField = React.memo(({ type = "text", value, onChange, placeholder, required = false, ...props }) => {
+  const handleChange = useCallback((e) => {
+    e.stopPropagation();
+    onChange(e.target.value);
+  }, [onChange]);
+
+  const handleClick = useCallback((e) => {
+    e.stopPropagation();
+  }, []);
+
+  const handleFocus = useCallback((e) => {
+    e.stopPropagation();
+  }, []);
+
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={handleChange}
+      placeholder={placeholder}
+      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+        required && !value ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+      }`}
+      onClick={handleClick}
+      onFocus={handleFocus}
+      required={required}
+      {...props}
+    />
+  );
+});
+InputField.displayName = 'InputField';
+
+const TextareaField = React.memo(({ value, onChange, placeholder, rows = 4, required = false }) => {
+  const handleChange = useCallback((e) => {
+    e.stopPropagation();
+    onChange(e.target.value);
+  }, [onChange]);
+
+  const handleClick = useCallback((e) => {
+    e.stopPropagation();
+  }, []);
+
+  const handleFocus = useCallback((e) => {
+    e.stopPropagation();
+  }, []);
+
+  return (
+    <textarea
+      value={value}
+      onChange={handleChange}
+      placeholder={placeholder}
+      rows={rows}
+      className={`w-full px-4 py-3 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+        required && !value ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+      }`}
+      onClick={handleClick}
+      onFocus={handleFocus}
+      required={required}
+    />
+  );
+});
+TextareaField.displayName = 'TextareaField';
 
 const AuditModal = ({ 
   isOpen, 
@@ -121,29 +189,12 @@ const AuditModal = ({
     }
   };
 
-  const conformityOptions = [
-    { value: 'Conforme', label: 'Conforme' },
-    { value: 'Non Conforme', label: 'Non Conforme' },
-    { value: 'En Cours', label: 'En Cours' }
-  ];
-
-  const riskOptions = [
-    { value: 'Faible', label: 'Faible' },
-    { value: 'Moyen', label: 'Moyen' },
-    { value: 'Élevé', label: 'Élevé' }
-  ];
-
-  const feasibilityOptions = [
-    { value: 'Facile', label: 'Facile' },
-    { value: 'Moyen', label: 'Moyenne' },
-    { value: 'Difficile', label: 'Difficile' }
-  ];
 
   const isFormValid = auditForm.conformite.trim() !== '';
 
   return (
     <div 
-      className="audit-modal"
+      className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
@@ -151,27 +202,27 @@ const AuditModal = ({
     >
       <div 
         ref={modalRef}
-        className="audit-modal-content"
+        className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
         tabIndex={-1}
       >
-        <div className="audit-modal-header">
-          <h3 id="audit-modal-title" className="audit-modal-title">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h3 id="audit-modal-title" className="text-xl font-semibold text-gray-900">
             Audit de Conformité
           </h3>
           <button
             onClick={handleClose}
-            className="audit-modal-close"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             disabled={isSaving}
             aria-label="Fermer la modal"
             type="button"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
         
-        <form onSubmit={handleSave} className="audit-modal-body">
-          <div className="audit-modal-row">
+        <form onSubmit={handleSave} className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormGroup label="Conformité" required>
               <SelectField
                 value={auditForm.conformite}
@@ -192,7 +243,7 @@ const AuditModal = ({
             </FormGroup>
           </div>
           
-          <div className="audit-modal-row">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormGroup label="Faisabilité">
               <SelectField
                 value={auditForm.faisabilite}
@@ -230,13 +281,19 @@ const AuditModal = ({
               rows={4}
             />
           </FormGroup>
+
+          {!isFormValid && (
+            <p className="text-sm text-red-600 mt-2">
+              * La conformité est obligatoire
+            </p>
+          )}
         </form>
         
-        <div className="audit-modal-footer">
+        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
           <button
             onClick={handleClose}
             disabled={isSaving}
-            className="audit-button secondary"
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
             type="button"
           >
             Annuler
@@ -244,21 +301,13 @@ const AuditModal = ({
           <button
             onClick={handleSave}
             disabled={isSaving || !isFormValid}
-            className="audit-button primary"
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
             type="button"
           >
             <Save size={16} />
-            {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+            <span>{isSaving ? 'Sauvegarde...' : 'Sauvegarder'}</span>
           </button>
         </div>
-        
-        {!isFormValid && (
-          <div className="audit-form-validation">
-            <p className="audit-validation-message">
-              * La conformité est obligatoire
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -85,7 +85,7 @@ const UpcomingDeadlines = ({ deadlines }) => {
     switch (status) {
       case 'Conforme': return 'conforme';
       case 'Non Conforme': return 'non-conforme';
-      case 'En Cours': return 'en-cours';
+      case 'Non Applicable': return 'non-applicable';
       default: return 'default';
     }
   };
