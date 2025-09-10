@@ -11,10 +11,12 @@ const conformityOptions = [
   { value: 'Non Applicable', label: 'Non Applicable' }
 ];
 
-const riskOptions = [
-  { value: 'Faible', label: 'Faible' },
-  { value: 'Moyen', label: 'Moyen' },
-  { value: 'Élevé', label: 'Élevé' }
+const priorityOption = [
+  { value: '1. Critique 🔴', label: '1. Critique 🔴' },
+  { value: '2. Élevée 🟠', label: '2. Élevée 🟠' },
+  { value: '3. Modérée 🟡', label: '3. Modérée 🟡' },
+  { value: '4. Faible 🟢', label: '4. Faible 🟢' },
+  { value: '5. Amélioration ⚪', label: '5. Amélioration ⚪' }
 ];
 
 const feasibilityOptions = [
@@ -189,6 +191,25 @@ const AuditModal = ({
     }
   };
 
+  const conformityOptions = [
+    { value: 'Conforme', label: 'Conforme' },
+    { value: 'Non Conforme', label: 'Non Conforme' },
+    { value: 'Non Applicable', label: 'Non Applicable' }
+  ];
+
+const priorityOption = [
+  { value: '1. Critique 🔴', label: '1. Critique 🔴' },
+  { value: '2. Élevée 🟠', label: '2. Élevée 🟠' },
+  { value: '3. Modérée 🟡', label: '3. Modérée 🟡' },
+  { value: '4. Faible 🟢', label: '4. Faible 🟢' },
+  { value: '5. Amélioration ⚪', label: '5. Amélioration ⚪' }
+];
+
+  const feasibilityOptions = [
+    { value: 'Facile', label: 'Facile' },
+    { value: 'Moyen', label: 'Moyenne' },
+    { value: 'Difficile', label: 'Difficile' }
+  ];
 
   const isFormValid = auditForm.conformite.trim() !== '';
 
@@ -233,12 +254,12 @@ const AuditModal = ({
               />
             </FormGroup>
             
-            <FormGroup label="Niveau de Risque">
+            <FormGroup label="Prioritée">
               <SelectField
                 value={auditForm.risque}
                 onChange={(value) => onInputChange('risque', value)}
-                options={riskOptions}
-                placeholder="Évaluer le risque..."
+                options={priorityOption}
+                placeholder="Évaluer la prioritée du CAPA..."
               />
             </FormGroup>
           </div>

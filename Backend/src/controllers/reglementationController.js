@@ -39,7 +39,7 @@ export const getReglementation = async (req, res) => {
     const sql = `
       SELECT 
         r.id, r.domaine, r.chapitre, r.sous_chapitre, r.titre, r.exigence, r.lois, r.documents,
-        a.conformite, a.risque, a.faisabilite, a.plan_action, a.deadline, a.owner,
+        a.conformite, a.Prioritée, a.faisabilite, a.plan_action, a.deadline, a.owner,
         ${isAdmin ? 'u.first_name, u.last_name, u.email as user_email' : 'NULL as first_name, NULL as last_name, NULL as user_email'}
       FROM reglementation_all r
       LEFT JOIN audit_conformite a ON r.id = a.reglementation_id ${isAdmin ? '' : `AND a.user_id = ${user_id}`}

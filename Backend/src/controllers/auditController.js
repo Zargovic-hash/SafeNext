@@ -3,36 +3,39 @@ import { pool } from "../db.js";
 
 export const saveAudit = async (req, res) => {
   try {
-    const { reglementation_id, conformite, risque, faisabilite, plan_action, deadline, owner } = req.body;
+    const { reglementation_id, conformite, prioritée, faisabilite, plan_action, deadline, owner } = req.body;
     const user_id = req.user.id; // Récupérer l'ID de l'utilisateur connecté
 
     console.log("🔥 Données reçues:", { ...req.body, user_id }); // Debug
+        console.log("➡️ Valeur de priorité reçue :", req.body.prioritée);
+
 
     if (!reglementation_id) {
       return res.status(400).json({ error: "reglementation_id manquant" });
     }
 
-    const sql = `
-      INSERT INTO audit_conformite
-        (reglementation_id, conformite, risque, faisabilite, plan_action, deadline, owner, user_id, created_at, updated_at)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8, NOW(), NOW())
-      ON CONFLICT (reglementation_id)
-      DO UPDATE SET 
-        conformite = EXCLUDED.conformite,
-        risque = EXCLUDED.risque,
-        faisabilite = EXCLUDED.faisabilite,
-        plan_action = EXCLUDED.plan_action,
-        deadline = EXCLUDED.deadline,
-        owner = EXCLUDED.owner,
-        user_id = EXCLUDED.user_id,
-        updated_at = NOW()
-      RETURNING *;
-    `;
+   const sql = `
+  INSERT INTO audit_conformite
+    (reglementation_id, conformite, "prioritée", faisabilite, plan_action, deadline, owner, user_id, created_at, updated_at)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8, NOW(), NOW())
+  ON CONFLICT (reglementation_id)
+  DO UPDATE SET 
+    conformite = EXCLUDED.conformite,
+    "prioritée" = EXCLUDED."prioritée",
+    faisabilite = EXCLUDED.faisabilite,
+    plan_action = EXCLUDED.plan_action,
+    deadline = EXCLUDED.deadline,
+    owner = EXCLUDED.owner,
+    user_id = EXCLUDED.user_id,
+    updated_at = NOW()
+  RETURNING *;
+`;
+
 
     const { rows } = await pool.query(sql, [
       reglementation_id,
       conformite || null,
-      risque || null,
+       prioritée || null,
       faisabilite || null,
       plan_action || null,
       deadline || null,

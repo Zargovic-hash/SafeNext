@@ -78,9 +78,9 @@ const RegulationRow = ({ regulation, onEditAudit }) => {
       </td>
       
       <td>
-        {regulation.risque ? (
-          <span className={`audit-risk-badge ${getRiskClass(regulation.risque)}`}>
-            {regulation.risque}
+        {regulation.Prioritée ? (
+          <span className={`audit-risk-badge ${getRiskClass(regulation.Prioritée)}`}>
+            {regulation.Prioritée}
           </span>
         ) : (
           <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>-</span>
@@ -171,7 +171,7 @@ const RegulationsTable = ({ regulations, onEditAudit }) => {
                 <th className="col-domain">Domaine</th>
                 <th className="col-chapter">Chapitre</th>
                 <th className="col-conformity">Conformité</th>
-                <th className="col-risk">Risque</th>
+                <th className="col-risk">Prioritée</th>
                 <th className="col-owner">Responsable</th>
                 <th className="col-deadline">Échéance</th>
                 <th className="col-actions">Actions</th>

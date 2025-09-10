@@ -107,10 +107,13 @@ const SummaryDashboard = ({ regulations, className = "" }) => {
     const nonConforme = regulations.filter(r => r.conformite === 'Non conforme').length;
     const enAttente = total - conforme - nonConforme;
     
-    const risqueElevé = regulations.filter(r => r.risque === 'Élevé').length;
-    const risqueMoyen = regulations.filter(r => r.risque === 'Moyen').length;
-    const risqueFaible = regulations.filter(r => r.risque === 'Faible').length;
-    
+    const prioritéeCritique = regulations.filter(r => r.prioritée === 'Critique').length;
+    const prioritéeÉlevée = regulations.filter(r => r.prioritée === 'Élevée').length;
+    const prioritéeModérée = regulations.filter(r => r.prioritée === 'Modérée').length;
+    const prioritéeFaible = regulations.filter(r => r.prioritée === 'Faible').length;
+    const Amélioration = regulations.filter(r => r.prioritée === 'Amélioration').length;
+
+
     // Calcul des deadlines approchantes (dans les 30 jours)
     const today = new Date();
     const thirtyDaysFromNow = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000));
@@ -125,9 +128,11 @@ const SummaryDashboard = ({ regulations, className = "" }) => {
       conforme,
       nonConforme,
       enAttente,
-      risqueElevé,
-      risqueMoyen,
-      risqueFaible,
+      prioritéeCritique,
+      prioritéeÉlevée,
+      prioritéeModérée,
+      prioritéeFaible,
+      Amélioration,
       deadlinesProches,
       conformiteRate: total > 0 ? Math.round((conforme / total) * 100) : 0
     };
@@ -185,8 +190,8 @@ const SummaryDashboard = ({ regulations, className = "" }) => {
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-amber-700">{stats.risqueElevé}</p>
-              <p className="text-xs text-amber-600 font-medium">Risque élevé</p>
+              <p className="text-2xl font-bold text-amber-700">{stats.prioritéeCritique}</p>
+              <p className="text-xs text-amber-600 font-medium">Prioritée Critique</p>
             </div>
             <div className="p-2 bg-amber-200 rounded-lg">
               <TrendingUpIcon className="h-4 w-4 text-amber-700" />
@@ -241,7 +246,7 @@ const AdvancedFilters = ({
   const uniqueValues = useMemo(() => {
     return {
       statuts: [...new Set(regulations.map(r => r.conformite).filter(Boolean))],
-      risques: [...new Set(regulations.map(r => r.risque).filter(Boolean))],
+      prioritées: [...new Set(regulations.map(r => r.prioritée).filter(Boolean))],
       owners: [...new Set(regulations.map(r => r.owner).filter(Boolean))]
     };
   }, [regulations]);
@@ -320,20 +325,20 @@ const AdvancedFilters = ({
                 </select>
               </div>
 
-              {/* Filtre par risque */}
+              {/* Filtre par prioritée */}
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-gray-700 flex items-center space-x-1">
                   <TrendingUpIcon className="h-4 w-4" />
-                  <span>Niveau de risque</span>
+                  <span>prioritée du plan d'action</span>
                 </Label>
                 <select
-                  value={filters.risque}
-                  onChange={(e) => onFilterChange('risque', e.target.value)}
+                  value={filters.prioritée}
+                  onChange={(e) => onFilterChange('prioritée', e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                 >
-                  <option value="">Tous les risques</option>
-                  {uniqueValues.risques.map(risque => (
-                    <option key={risque} value={risque}>{risque}</option>
+                  <option value="">Tous les prioritées</option>
+                  {uniqueValues.prioritées.map(prioritée => (
+                    <option key={prioritée} value={prioritée}>{prioritée}</option>
                   ))}
                 </select>
               </div>
@@ -398,7 +403,7 @@ const ReglementationPage = () => {
   // États pour les filtres avancés
   const [filters, setFilters] = useState({
     statut: '',
-    risque: '',
+    prioritée: '',
     owner: '',
     deadlineProche: ''
   });
@@ -406,7 +411,7 @@ const ReglementationPage = () => {
   // État pour le formulaire d'audit
   const [auditForm, setAuditForm] = useState({
     conformite: '',
-    risque: '',
+    prioritée: '',
     faisabilite: '',
     deadline: '',
     owner: '',
@@ -463,7 +468,7 @@ const ReglementationPage = () => {
     setSelectedDomaine('');
     setFilters({
       statut: '',
-      risque: '',
+      prioritée: '',
       owner: '',
       deadlineProche: ''
     });
@@ -484,8 +489,8 @@ const ReglementationPage = () => {
       // Filtre par statut
       const matchesStatut = !filters.statut || reg.conformite === filters.statut;
       
-      // Filtre par risque
-      const matchesRisque = !filters.risque || reg.risque === filters.risque;
+      // Filtre par prioritée
+      const matchesprioritée = !filters.prioritée || reg.prioritée === filters.prioritée;
       
       // Filtre par propriétaire
       const matchesOwner = !filters.owner || reg.owner === filters.owner;
@@ -516,7 +521,7 @@ const ReglementationPage = () => {
       })();
       
       return matchesSearch && matchesDomaine && matchesStatut && 
-             matchesRisque && matchesOwner && matchesDeadline;
+             matchesprioritée && matchesOwner && matchesDeadline;
     });
   }, [regulations, searchTerm, selectedDomaine, filters]);
 
@@ -546,7 +551,7 @@ const ReglementationPage = () => {
     setAuditingRegulation(regulation);
     setAuditForm({
       conformite: regulation.conformite || '',
-      risque: regulation.risque || '',
+      prioritée: regulation.prioritée || '',
       faisabilite: regulation.faisabilite || '',
       deadline: regulation.deadline || '',
       owner: regulation.owner || '',
@@ -595,7 +600,7 @@ const ReglementationPage = () => {
         setAuditingRegulation(null);
         setAuditForm({
           conformite: '',
-          risque: '',
+          prioritée: '',
           faisabilite: '',
           deadline: '',
           owner: '',
@@ -618,7 +623,7 @@ const ReglementationPage = () => {
     setAuditingRegulation(null);
     setAuditForm({
       conformite: '',
-      risque: '',
+      prioritée: '',
       faisabilite: '',
       deadline: '',
       owner: '',
@@ -970,16 +975,16 @@ const ReglementationPage = () => {
                                 )}
 
                                 {/* Affichage des informations d'audit */}
-                                {(regulation.risque || regulation.owner || regulation.deadline) && (
+                                {(regulation.prioritée || regulation.owner || regulation.deadline) && (
                                   <div className="space-y-3 pt-2 border-t border-gray-100">
                                     <div className="flex flex-wrap gap-2">
-                                      {regulation.risque && (
+                                      {regulation.prioritée && (
                                         <StatusBadge 
-                                          status={regulation.risque === 'Élevé' ? 'danger' : regulation.risque === 'Moyen' ? 'warning' : 'success'}
+                                          status={regulation.prioritée === 'Critique' ? 'danger' : regulation.prioritée === 'Critique' ? 'warning' : 'success'}
                                           className="text-xs"
                                         >
                                           <TrendingUpIcon className="h-3 w-3 mr-1" />
-                                          {regulation.risque}
+                                          {regulation.prioritée}
                                         </StatusBadge>
                                       )}
                                       {regulation.owner && (
@@ -1076,7 +1081,7 @@ const ReglementationPage = () => {
                             <span>Domaine</span>
                           </div>
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[200px]">
+                        <th className="px-1 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[100px] whitespace-normal break-words">
                           <div className="flex items-center space-x-2">
                             <span>Titre</span>
                           </div>
@@ -1086,6 +1091,11 @@ const ReglementationPage = () => {
                             <span>Exigence</span>
                           </div>
                         </th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[300px]">
+                          <div className="flex items-center space-x-2">
+                            <span>Référence légales</span>
+                          </div>
+                        </th>
                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-32">
                           <div className="flex items-center space-x-2">
                             <span>Statut</span>
@@ -1093,7 +1103,12 @@ const ReglementationPage = () => {
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-28">
                           <div className="flex items-center space-x-2">
-                            <span>Risque</span>
+                            <span>prioritée</span>
+                          </div>
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[300px]">
+                          <div className="flex items-center space-x-2">
+                            <span>Plan d'actions</span>
                           </div>
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-32">
@@ -1108,7 +1123,7 @@ const ReglementationPage = () => {
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-32">
                           <div className="flex items-center space-x-2">
-                            <span>Actions</span>
+                            <span>Audit</span>
                           </div>
                         </th>
                       </tr>
@@ -1134,17 +1149,24 @@ const ReglementationPage = () => {
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-5 text-sm text-gray-900">
-                            <div className="max-w-[250px]">
-                              <p className="font-semibold truncate cursor-help group-hover:text-blue-700 transition-colors" title={regulation.titre || 'Titre non défini'}>
+                          <td className="px-1 py-5 text-sm text-gray-900 ">
+                            <div className="max-w-[150px]">
+                              <p className="font-semibold whitespace-normal break-words cursor-help group-hover:text-blue-700 transition-colors" title={regulation.titre || 'Titre non défini'}>
                                 {regulation.titre || 'Titre non défini'}
                               </p>
                             </div>
                           </td>
                           <td className="px-6 py-5 text-sm text-gray-600">
                             <div className="max-w-[350px]">
-                              <p className="line-clamp-2 cursor-help leading-relaxed" title={regulation.exigence || 'Aucune exigence définie'}>
+                              <p className="line-clamp-10 cursor-help leading-relaxed" title={regulation.exigence || 'Aucune exigence définie'}>
                                 {regulation.exigence || 'Aucune exigence définie'}
+                              </p>
+                            </div>
+                          </td>
+                           <td className="px-6 py-5 text-sm text-gray-600">
+                            <div className="max-w-[350px]">
+                              <p className="line-clamp-10 cursor-help leading-relaxed" title={regulation.exigence || 'Aucune exigence définie'}>
+                                {regulation.lois || 'Aucune Document définie'}
                               </p>
                             </div>
                           </td>
@@ -1167,21 +1189,47 @@ const ReglementationPage = () => {
                               )}
                             </div>
                           </td>
+                            
                           <td className="px-6 py-5 whitespace-nowrap text-sm">
                             <div className="flex items-center">
-                              {regulation.risque ? (
+                              {regulation.prioritée ? (
                                 <StatusBadge 
-                                  status={regulation.risque === 'Élevé' ? 'danger' : regulation.risque === 'Moyen' ? 'warning' : 'success'}
+                                  status={regulation.prioritée === 'Critique' ? 'danger' : regulation.prioritée === 'Critique' ? 'warning' : 'success'}
                                   className="shadow-sm flex items-center space-x-1"
                                 >
                                   <TrendingUpIcon className="h-3 w-3" />
-                                  <span>{regulation.risque}</span>
+                                  <span>{regulation.prioritée}</span>
                                 </StatusBadge>
                               ) : (
                                 <span className="text-gray-400 italic text-xs">Non assigné</span>
                               )}
                             </div>
                           </td>
+                          <td className="px-6 py-5 text-sm text-gray-600">
+                            {regulation.plan_action ? (
+                              <p className="line-clamp-10 leading-relaxed">
+                                {regulation.plan_action}
+                              </p>
+                            ) : (
+                              <span className="text-gray-400 italic text-xs">Non assigné</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-5 whitespace-nowrap text-sm">
+                            <div className="flex items-center">
+                              {regulation.prioritée ? (
+                                <StatusBadge 
+                                  status={regulation.prioritée === 'Critique' ? 'danger' : regulation.prioritée === 'Critique' ? 'warning' : 'success'}
+                                  className="shadow-sm flex items-center space-x-1"
+                                >
+                                  <TrendingUpIcon className="h-3 w-3" />
+                                  <span>{regulation.owner}</span>
+                                </StatusBadge>
+                              ) : (
+                                <span className="text-gray-400 italic text-xs">Non assigné</span>
+                              )}
+                            </div>
+                          </td>
+                          
                           <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-600">
                             <div className="flex items-center space-x-2">
                               {regulation.deadline ? (
@@ -1197,6 +1245,7 @@ const ReglementationPage = () => {
                               )}
                             </div>
                           </td>
+
                           <td className="px-6 py-5 whitespace-nowrap text-sm font-medium">
                             <div className="flex items-center space-x-2">
                               <Button
