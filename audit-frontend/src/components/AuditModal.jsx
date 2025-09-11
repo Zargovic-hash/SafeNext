@@ -19,6 +19,8 @@ const priorityOption = [
   { value: '5. Amélioration ⚪', label: '5. Amélioration ⚪' }
 ];
 
+
+
 const feasibilityOptions = [
   { value: 'Facile', label: 'Facile' },
   { value: 'Moyen', label: 'Moyenne' },
@@ -205,6 +207,7 @@ const priorityOption = [
   { value: '5. Amélioration ⚪', label: '5. Amélioration ⚪' }
 ];
 
+
   const feasibilityOptions = [
     { value: 'Facile', label: 'Facile' },
     { value: 'Moyen', label: 'Moyenne' },
@@ -254,10 +257,10 @@ const priorityOption = [
               />
             </FormGroup>
             
-            <FormGroup label="Prioritée">
+            <FormGroup label="Prioritée du CAPA">
               <SelectField
-                value={auditForm.risque}
-                onChange={(value) => onInputChange('risque', value)}
+                value={auditForm.prioritée}
+                onChange={(value) => onInputChange('prioritée', value)}
                 options={priorityOption}
                 placeholder="Évaluer la prioritée du CAPA..."
               />
