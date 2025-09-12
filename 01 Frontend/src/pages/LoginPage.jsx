@@ -10,6 +10,7 @@ import CardContent from '../components/ui/CardContent';
 import Input from '../components/ui/Input';
 import Label from '../components/ui/Label';
 import DocumentIcon from '../icons/DocumentIcon';
+import { PasswordHideIcon, PasswordViewIcon } from '../icons/icon';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -96,8 +97,9 @@ const LoginPage = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                     disabled={loading}
+                    tabIndex={-1}
                   >
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                    {showPassword ? <PasswordHideIcon className="h-5 w-5" /> : <PasswordViewIcon className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
@@ -126,6 +128,15 @@ const LoginPage = () => {
                 </Link>
               </p>
             </div>
+
+            <div className="login-mt-6 text-center">
+              <p className="text-sm text-gray-600">Mot de passe Oublié? {' '}
+              <Link to="/forgot-password" className="text-blue-600 hover:text-blue-700 font-medium hover:underline">
+                Récupérez votre mot de passe
+               </Link>
+               </p>
+            </div>
+
           </CardContent>
         </Card>
       </motion.div>

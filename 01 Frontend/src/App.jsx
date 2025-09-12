@@ -1,14 +1,15 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import  AuthProvider  from './context/AuthContext';
-import  ProtectedRoute  from './components/ProtectedRoute';
-import  Header from './components/Header';
-import  Footer  from './components/Footer';
+import AuthProvider from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Header from './components/Header';
+import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import RecapPage from './pages/RecapPage';
 import ReglementationPage from './pages/ReglementationPage';
+import ProfilePage from './pages/ProfilePage';   // ✅ importer la page profil
 
 const App = () => {
   return (
@@ -30,6 +31,7 @@ const App = () => {
                       <Route path="/" element={<HomePage />} />
                       <Route path="/reglementations" element={<ReglementationPage />} />
                       <Route path="/recap" element={<RecapPage />} />
+                      <Route path="/profile" element={<ProfilePage />} /> {/* ✅ Profil */}
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </main>
