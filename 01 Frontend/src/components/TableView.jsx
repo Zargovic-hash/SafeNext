@@ -24,7 +24,7 @@ const TableView = ({ filteredRegulations, isFullscreen, handleStartAudit }) => {
               <th className="px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[200px]">Titre</th>
               <th className="px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[400px]">Exigence</th>
               <th className="px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[400px]">Références légales</th>
-              <th className="px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[400px]">Références légales</th>              
+              <th className="px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[400px]">documents légales</th>              
               <th className="px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-32">Statut</th>
               <th className="px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-32">Priorité</th>
               <th className="px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[300px]">Plan d'actions</th>
@@ -69,7 +69,7 @@ const TableView = ({ filteredRegulations, isFullscreen, handleStartAudit }) => {
                 </td>
                 <td className="px-4 py-2 text-sm text-gray-600">
                   <p className="line-clamp-4 cursor-help leading-snug" title={regulation.documents || 'Aucune référence légale définie'}>
-                    {regulation.documents || 'Aucune docuement légale est exigé'}
+                    {regulation.documents || 'Aucun docuement légale est exigé'}
                   </p>
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap text-sm">

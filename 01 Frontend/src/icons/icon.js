@@ -15,6 +15,8 @@ import LoginIcon from "./LoginIcon";
 import LogoutIcon from "./LogoutIcon";
 import PasswordHideIcon from "./PasswordHideIcon";
 import PasswordViewIcon from "./PasswordViewIcon";
+import LoaderIcon from "./LoaderIcon";
+import FullscreenIcon from "./FullscreenIcon";
 
 // ✅ Export individuel
 export {
@@ -34,7 +36,9 @@ export {
   LoginIcon,
   LogoutIcon,
   PasswordHideIcon,
-  PasswordViewIcon
+  PasswordViewIcon,
+  LoaderIcon,
+  FullscreenIcon
 };
 
 // ✅ Export par défaut (optionnel, pratique pour destructurer)
@@ -55,6 +59,8 @@ const icons = {
   LoginIcon,
   LogoutIcon,
    PasswordHideIcon,
-  PasswordViewIcon
+  PasswordViewIcon,
+  LoaderIcon,
+  FullscreenIcon
 };
 export default icons;

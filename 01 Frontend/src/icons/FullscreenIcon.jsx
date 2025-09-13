@@ -5,3 +5,4 @@ const FullscreenIcon = ({ className = "h-5 w-5" }) => (
   </svg>
 );
 
+export default FullscreenIcon;
