@@ -59,7 +59,7 @@ const RecapPage = () => {
     'Moyen': '#F59E0B',
     'Difficile': '#EF4444'
   };
-  
+
   const getPriorityLabel = (priority) => {
     const normalizedPriority = priority?.toLowerCase().trim();
     if (!normalizedPriority) return 'Non définie';
@@ -106,6 +106,7 @@ const RecapPage = () => {
           const prioritesDeadlines = {};
 
           const today = new Date();
+          today.setHours(0, 0, 0, 0); // Normaliser la date pour la comparaison
 
           (regulations || []).forEach(regulation => {
             const conformite = regulation.conformite?.toLowerCase().trim();
@@ -153,6 +154,7 @@ const RecapPage = () => {
               }
               if (regulation.deadline) {
                 const deadlineDate = new Date(regulation.deadline);
+                deadlineDate.setHours(0, 0, 0, 0); // Normaliser la date pour la comparaison
                 if (deadlineDate < today) {
                   prioritesDeadlines[prioriteLabel]['Échue']++;
                   en_retard++; // Compter les audits en retard
@@ -170,7 +172,7 @@ const RecapPage = () => {
               if (!regulation.deadline) return false;
               const deadlineDate = new Date(regulation.deadline);
               const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-              return deadlineDate >= today && deadlineDate <= thirtyDaysFromNow;
+              return deadlineDate > today && deadlineDate <= thirtyDaysFromNow;
             })
             .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
             .slice(0, 5);
@@ -205,7 +207,7 @@ const RecapPage = () => {
     fetchStats();
   }, [token]);
 
-  // Données pour les graphiques existants
+  // Données pour les graphiques
   const conformityData = {
     labels: ['Conformes', 'Non conformes', 'Non applicables', 'En attente'],
     datasets: [{
@@ -266,8 +268,6 @@ const RecapPage = () => {
       borderWidth: 1,
     }]
   };
-
-  // NOUVEAU: Données pour le graphique Priorité vs Faisabilité
   const pfLabels = ['Facile', 'Moyen', 'Difficile'];
   const pfDatasets = Object.keys(PRIORITY_MAP).map(priority => {
     return {
@@ -278,12 +278,10 @@ const RecapPage = () => {
       backgroundColor: PRIORITY_MAP[priority],
     };
   });
-
   const prioritesFaisabilitesData = {
     labels: pfLabels,
     datasets: pfDatasets
   };
-
   const pfOptions = {
     responsive: true,
     plugins: {
@@ -295,8 +293,6 @@ const RecapPage = () => {
       y: { stacked: true },
     }
   };
-
-  // NOUVEAU: Données pour le graphique Priorité vs Deadline
   const pdLabels = ['Échue', 'À venir'];
   const pdDatasets = Object.keys(PRIORITY_MAP).map(priority => {
     return {
@@ -307,12 +303,10 @@ const RecapPage = () => {
       backgroundColor: PRIORITY_MAP[priority],
     };
   });
-
   const prioritesDeadlinesData = {
     labels: pdLabels,
     datasets: pdDatasets
   };
-
   const pdOptions = {
     responsive: true,
     plugins: {
@@ -367,7 +361,7 @@ const RecapPage = () => {
           </div>
         </motion.div>
 
-        {/* Section des graphiques */}
+        {/* Section: Répartition de l'état des audits */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -379,7 +373,7 @@ const RecapPage = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4 }}
-            className="col-span-1 lg:col-span-1"
+            className="col-span-1"
           >
             <Card className="shadow-lg bg-white rounded-2xl">
               <CardHeader>
@@ -398,7 +392,7 @@ const RecapPage = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="col-span-1 lg:col-span-1"
+            className="col-span-1"
           >
             <Card className="shadow-lg bg-white rounded-2xl">
               <CardHeader>
@@ -418,13 +412,13 @@ const RecapPage = () => {
               </CardContent>
             </Card>
           </motion.div>
-          
+
           {/* Graphique de répartition par faisabilité */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6 }}
-            className="col-span-1 lg:col-span-1"
+            className="col-span-1"
           >
             <Card className="shadow-lg bg-white rounded-2xl">
               <CardHeader>
@@ -446,14 +440,14 @@ const RecapPage = () => {
           </motion.div>
         </motion.div>
 
-        {/* Section des graphiques relationnels */}
+        {/* Section: Analyses et Priorisation */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.7 }}
           className="grid grid-cols-1 md:grid-cols-2 gap-8"
         >
-          {/* NOUVEAU: Graphique Priorité vs Faisabilité */}
+          {/* Graphique Priorité vs Faisabilité */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -478,7 +472,7 @@ const RecapPage = () => {
             </Card>
           </motion.div>
 
-          {/* NOUVEAU: Graphique Priorité vs Deadline */}
+          {/* Graphique Priorité vs Deadline */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -504,149 +498,203 @@ const RecapPage = () => {
           </motion.div>
         </motion.div>
 
-        {/* Graphique de répartition par domaine */}
+        {/* Section: Répartition Détaillée */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 1.0 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-8"
         >
-          <Card className="shadow-lg bg-white rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-lg">Répartition par Domaine</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 md:p-8">
-              <div className="h-64 md:h-80">
-                {Object.keys(stats.domaines).length > 0 ? (
-                  <Bar data={domainData} options={domainOptions} />
-                ) : (
-                  <div className="text-center text-gray-500 italic py-8">
-                    <BarChartIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>Aucune donnée de domaine</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-        
-        {/* Graphique de répartition par propriétaire */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 1.1 }}
-        >
-          <Card className="shadow-lg bg-white rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-lg">Répartition par Propriétaire</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 md:p-8">
-              <div className="h-64 md:h-80">
-                {Object.keys(stats.owners).length > 0 ? (
-                  <Bar data={ownerData} options={domainOptions} />
-                ) : (
-                  <div className="text-center text-gray-500 italic py-8">
-                    <UserIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>Aucune donnée de propriétaire</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Tableau des échéances proches */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 1.2 }}
-        >
-          <Card className="shadow-lg bg-white rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-lg">Échéances à venir</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {deadlines.length === 0 ? (
-                <div className="text-center text-gray-500 italic py-8">
-                  <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>Aucune échéance à venir</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {deadlines.map((regulation, index) => (
-                    <div
-                      key={regulation.id}
-                      className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-white shadow-sm"
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{regulation.titre}</p>
-                        <p className="text-sm text-gray-600">{regulation.domaine}</p>
-                      </div>
-                      <div className="ml-4 flex items-center space-x-2">
-                        <Badge
-                          variant={new Date(regulation.deadline) < new Date() ? 'destructive' : 'secondary'}
-                          className="flex items-center space-x-1"
-                        >
-                          <CalendarIcon className="h-3 w-3" />
-                          <span>{new Date(regulation.deadline).toLocaleDateString('fr-FR')}</span>
-                        </Badge>
-                      </div>
+          {/* Graphique de répartition par domaine */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.1 }}
+          >
+            <Card className="shadow-lg bg-white rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-lg">Répartition par Domaine</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 md:p-8">
+                <div className="h-64 md:h-80">
+                  {Object.keys(stats.domaines).length > 0 ? (
+                    <Bar data={domainData} options={domainOptions} />
+                  ) : (
+                    <div className="text-center text-gray-500 italic py-8">
+                      <BarChartIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>Aucune donnée de domaine</p>
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
+          
+          {/* Graphique de répartition par propriétaire */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.2 }}
+          >
+            <Card className="shadow-lg bg-white rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-lg">Répartition par Propriétaire</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 md:p-8">
+                <div className="h-64 md:h-80">
+                  {Object.keys(stats.owners).length > 0 ? (
+                    <Bar data={ownerData} options={domainOptions} />
+                  ) : (
+                    <div className="text-center text-gray-500 italic py-8">
+                      <UserIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>Aucune donnée de propriétaire</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </motion.div>
 
-        {/* Tableau des audits récents */}
+        {/* Section: Diagramme de Priorisation (Isinhawer) */}
+        <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.3 }}
+          >
+            <Card className="shadow-lg bg-white rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-lg">Diagramme de Priorisation (Eisenhower-like)</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 md:p-8">
+                <div className="overflow-x-auto">
+                    <div className="grid grid-cols-4 gap-2 text-center text-sm font-semibold text-gray-700 mb-2">
+                        <div className="col-span-1"></div>
+                        <div className="col-span-1">Facile</div>
+                        <div className="col-span-1">Moyen</div>
+                        <div className="col-span-1">Difficile</div>
+                    </div>
+                    {Object.keys(PRIORITY_MAP).map(priorityLabel => (
+                        <div key={priorityLabel} className="grid grid-cols-4 gap-2 mb-2 items-center">
+                            <div className="col-span-1 p-2 rounded-lg text-white" style={{ backgroundColor: PRIORITY_MAP[priorityLabel] }}>
+                                {priorityLabel.split(' ')[0]} {priorityLabel.split(' ')[1]}
+                            </div>
+                            {['Facile', 'Moyen', 'Difficile'].map(feasibilityLabel => (
+                                <div
+                                    key={feasibilityLabel}
+                                    className="col-span-1 text-center p-2 rounded-lg bg-gray-100 font-bold text-lg"
+                                >
+                                    {(stats.prioritesFaisabilites[priorityLabel] || {})[feasibilityLabel] || 0}
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+        {/* Section: Listes et Échéances */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 1.3 }}
+          transition={{ duration: 0.5, delay: 1.4 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-8"
         >
-          <Card className="shadow-lg bg-white rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-lg">Audits récents</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {recentAudits.length === 0 ? (
-                <div className="text-center text-gray-500 italic py-8">
-                  <DocumentIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>Aucun audit récent</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {recentAudits.slice(0, 10).map((audit, index) => (
-                    <motion.div
-                      key={audit.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 * index }}
-                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">
-                          {audit.titre || 'Réglementation sans titre'}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {audit.domaine} • {new Date(audit.updated_at).toLocaleDateString('fr-FR')}
-                        </p>
-                      </div>
-                      <div className="ml-4">
-                        {audit.conformite ? (
-                          <Badge variant={audit.conformite === 'Conforme' ? 'default' : 'destructive'}>
-                            {audit.conformite}
+          {/* Tableau des échéances proches */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.5 }}
+          >
+            <Card className="shadow-lg bg-white rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-lg">Échéances à venir</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {deadlines.length === 0 ? (
+                  <div className="text-center text-gray-500 italic py-8">
+                    <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>Aucune échéance à venir</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {deadlines.map((regulation, index) => (
+                      <div
+                        key={regulation.id}
+                        className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-white shadow-sm"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{regulation.titre}</p>
+                          <p className="text-sm text-gray-600">{regulation.domaine}</p>
+                        </div>
+                        <div className="ml-4 flex items-center space-x-2">
+                          <Badge
+                            variant={new Date(regulation.deadline) < new Date() ? 'destructive' : 'secondary'}
+                            className="flex items-center space-x-1"
+                          >
+                            <CalendarIcon className="h-3 w-3" />
+                            <span>{new Date(regulation.deadline).toLocaleDateString('fr-FR')}</span>
                           </Badge>
-                        ) : (
-                          <Badge variant="outline">En attente</Badge>
-                        )}
+                        </div>
                       </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Tableau des audits récents */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.6 }}
+          >
+            <Card className="shadow-lg bg-white rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-lg">Audits récents</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentAudits.length === 0 ? (
+                  <div className="text-center text-gray-500 italic py-8">
+                    <DocumentIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>Aucun audit récent</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {recentAudits.slice(0, 10).map((audit, index) => (
+                      <motion.div
+                        key={audit.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 * index }}
+                        className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">
+                            {audit.titre || 'Réglementation sans titre'}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {audit.domaine} • {new Date(audit.updated_at).toLocaleDateString('fr-FR')}
+                          </p>
+                        </div>
+                        <div className="ml-4">
+                          {audit.conformite ? (
+                            <Badge variant={audit.conformite === 'Conforme' ? 'default' : 'destructive'}>
+                              {audit.conformite}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">En attente</Badge>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         </motion.div>
       </div>
     </div>
