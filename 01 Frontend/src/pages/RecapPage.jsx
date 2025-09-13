@@ -12,6 +12,9 @@ import CalendarIcon from '../icons/CalendarIcon';
 import { LoadingSpinner } from "../components/ui/componentsui";
 import { Pie, Doughnut, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
+import AuditDetailsTable from '../components/AuditDetailsTable';
+import ChevronDownIcon from '../icons/ChevronDownIcon';
+import ChevronUpIcon from '../icons/ChevronUpIcon';
 
 ChartJS.register(
   ArcElement,
@@ -22,6 +25,35 @@ ChartJS.register(
   BarElement,
   Title
 );
+
+const CollapsibleTable = ({ audits, title }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (audits.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card className="shadow-lg bg-white rounded-2xl mb-4">
+      <CardHeader className="cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+        <CardTitle className="flex justify-between items-center text-lg">
+          {title} ({audits.length})
+          {isOpen ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
+        </CardTitle>
+      </CardHeader>
+      <motion.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
+        className="overflow-hidden"
+      >
+        <CardContent className="p-6 md:p-8">
+          <AuditDetailsTable audits={audits} />
+        </CardContent>
+      </motion.div>
+    </Card>
+  );
+};
 
 const RecapPage = () => {
   const { user, token } = useAuth();
@@ -39,13 +71,12 @@ const RecapPage = () => {
     prioritesFaisabilites: {},
     prioritesDeadlines: {}
   });
-  const [recentAudits, setRecentAudits] = useState([]);
+  const [allAudits, setAllAudits] = useState([]);
   const [deadlines, setDeadlines] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const API_BASE = 'http://localhost:3001/api';
 
-  // Définition des priorités et de leurs couleurs pour une cohérence visuelle
   const PRIORITY_MAP = {
     '1. Critique 🔴': '#EF4444',
     '2. Élevée 🟠': '#F59E0B',
@@ -91,7 +122,7 @@ const RecapPage = () => {
 
         if (response.ok) {
           const regulations = await response.json();
-          setRecentAudits(regulations || []);
+          setAllAudits(regulations || []);
 
           let conformes = 0;
           let non_conformes = 0;
@@ -106,7 +137,7 @@ const RecapPage = () => {
           const prioritesDeadlines = {};
 
           const today = new Date();
-          today.setHours(0, 0, 0, 0); // Normaliser la date pour la comparaison
+          today.setHours(0, 0, 0, 0);
 
           (regulations || []).forEach(regulation => {
             const conformite = regulation.conformite?.toLowerCase().trim();
@@ -121,25 +152,20 @@ const RecapPage = () => {
               en_attente++;
             }
 
-            // Agrégation par priorité avec normalisation
             const prioriteLabel = getPriorityLabel(regulation.prioritée);
             priorites[prioriteLabel] = (priorites[prioriteLabel] || 0) + 1;
 
-            // Agrégation par domaine
             if (regulation.domaine) {
               domaines[regulation.domaine] = (domaines[regulation.domaine] || 0) + 1;
             }
 
-            // Agrégation par propriétaire
             if (regulation.owner) {
               owners[regulation.owner] = (owners[regulation.owner] || 0) + 1;
             }
 
-            // Agrégation par faisabilité
             const faisabiliteLabel = getFeasibilityLabel(regulation.faisabilite);
             faisabilites[faisabiliteLabel] = (faisabilites[faisabiliteLabel] || 0) + 1;
 
-            // Agrégation Priorité vs Faisabilité
             if (prioriteLabel !== 'Non définie' && faisabiliteLabel !== 'Non évaluée') {
               if (!prioritesFaisabilites[prioriteLabel]) {
                 prioritesFaisabilites[prioriteLabel] = { Facile: 0, Moyen: 0, Difficile: 0 };
@@ -147,17 +173,16 @@ const RecapPage = () => {
               prioritesFaisabilites[prioriteLabel][faisabiliteLabel]++;
             }
 
-            // Agrégation Priorité vs Deadline
             if (prioriteLabel !== 'Non définie') {
               if (!prioritesDeadlines[prioriteLabel]) {
                 prioritesDeadlines[prioriteLabel] = { 'Échue': 0, 'À venir': 0 };
               }
               if (regulation.deadline) {
                 const deadlineDate = new Date(regulation.deadline);
-                deadlineDate.setHours(0, 0, 0, 0); // Normaliser la date pour la comparaison
+                deadlineDate.setHours(0, 0, 0, 0);
                 if (deadlineDate < today) {
                   prioritesDeadlines[prioriteLabel]['Échue']++;
-                  en_retard++; // Compter les audits en retard
+                  en_retard++;
                 } else {
                   prioritesDeadlines[prioriteLabel]['À venir']++;
                 }
@@ -207,7 +232,6 @@ const RecapPage = () => {
     fetchStats();
   }, [token]);
 
-  // Données pour les graphiques
   const conformityData = {
     labels: ['Conformes', 'Non conformes', 'Non applicables', 'En attente'],
     datasets: [{
@@ -319,6 +343,51 @@ const RecapPage = () => {
     }
   };
 
+  // Filtrer les données pour chaque tableau
+  const conformesAudits = allAudits.filter(a => a.conformite?.toLowerCase().trim() === 'conforme');
+  const nonConformesAudits = allAudits.filter(a => a.conformite?.toLowerCase().trim() === 'non conforme' || a.conformite?.toLowerCase().trim() === 'nonconforme');
+  const nonApplicablesAudits = allAudits.filter(a => a.conformite?.toLowerCase().trim() === 'non applicable' || a.conformite?.toLowerCase().trim() === 'nonapplicable');
+  const enAttenteAudits = allAudits.filter(a => !a.conformite || (a.conformite?.toLowerCase().trim() !== 'conforme' && a.conformite?.toLowerCase().trim() !== 'non conforme' && a.conformite?.toLowerCase().trim() !== 'nonconforme' && a.conformite?.toLowerCase().trim() !== 'non applicable' && a.conformite?.toLowerCase().trim() !== 'nonapplicable'));
+  
+  const critiqueAudits = allAudits.filter(a => a.prioritée?.toLowerCase().trim().includes('critique'));
+  const eleveeAudits = allAudits.filter(a => a.prioritée?.toLowerCase().trim().includes('élevée'));
+  const modereeAudits = allAudits.filter(a => a.prioritée?.toLowerCase().trim().includes('modérée'));
+  const faibleAudits = allAudits.filter(a => a.prioritée?.toLowerCase().trim().includes('faible'));
+  const ameliorationAudits = allAudits.filter(a => a.prioritée?.toLowerCase().trim().includes('amélioration'));
+  
+  const facileAudits = allAudits.filter(a => a.faisabilite?.toLowerCase().trim().includes('facile'));
+  const moyenAudits = allAudits.filter(a => a.faisabilite?.toLowerCase().trim().includes('moyen'));
+  const difficileAudits = allAudits.filter(a => a.faisabilite?.toLowerCase().trim().includes('difficile'));
+
+  const getEisenhowerAudits = (priorityLabel, feasibilityLabel) => {
+    return allAudits.filter(a =>
+      getPriorityLabel(a.prioritée) === priorityLabel &&
+      getFeasibilityLabel(a.faisabilite) === feasibilityLabel
+    );
+  };
+  
+  const renderAuditTables = (auditsArray, title) => {
+    const limitedAudits = auditsArray.slice(0, 10);
+    const showLink = auditsArray.length > 10;
+    return (
+      <>
+        <AuditDetailsTable audits={limitedAudits} title={title} />
+        {showLink && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-center mt-4 text-sm text-gray-500"
+          >
+            <Link to="/reglementations" className="text-blue-600 hover:underline">
+              Voir plus de détails sur la page réglementations
+            </Link>
+          </motion.div>
+        )}
+      </>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -361,14 +430,12 @@ const RecapPage = () => {
           </div>
         </motion.div>
 
-        {/* Section: Répartition de l'état des audits */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
         >
-          {/* Graphique de répartition par conformité */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -385,9 +452,12 @@ const RecapPage = () => {
                 </div>
               </CardContent>
             </Card>
+            {renderAuditTables(conformesAudits, "Audits Conformes")}
+            {renderAuditTables(nonConformesAudits, "Audits Non Conformes")}
+            {renderAuditTables(nonApplicablesAudits, "Audits Non Applicables")}
+            {renderAuditTables(enAttenteAudits, "Audits en Attente")}
           </motion.div>
 
-          {/* Graphique de répartition par priorité */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -411,9 +481,13 @@ const RecapPage = () => {
                 </div>
               </CardContent>
             </Card>
+            {renderAuditTables(critiqueAudits, "Audits Critiques")}
+            {renderAuditTables(eleveeAudits, "Audits Élevés")}
+            {renderAuditTables(modereeAudits, "Audits Modérés")}
+            {renderAuditTables(faibleAudits, "Audits Faibles")}
+            {renderAuditTables(ameliorationAudits, "Audits d'Amélioration")}
           </motion.div>
 
-          {/* Graphique de répartition par faisabilité */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -437,17 +511,18 @@ const RecapPage = () => {
                 </div>
               </CardContent>
             </Card>
+            {renderAuditTables(facileAudits, "Audits Faciles")}
+            {renderAuditTables(moyenAudits, "Audits Moyens")}
+            {renderAuditTables(difficileAudits, "Audits Difficiles")}
           </motion.div>
         </motion.div>
 
-        {/* Section: Analyses et Priorisation */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.7 }}
           className="grid grid-cols-1 md:grid-cols-2 gap-8"
         >
-          {/* Graphique Priorité vs Faisabilité */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -472,7 +547,6 @@ const RecapPage = () => {
             </Card>
           </motion.div>
 
-          {/* Graphique Priorité vs Deadline */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -498,14 +572,12 @@ const RecapPage = () => {
           </motion.div>
         </motion.div>
 
-        {/* Section: Répartition Détaillée */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 1.0 }}
           className="grid grid-cols-1 md:grid-cols-2 gap-8"
         >
-          {/* Graphique de répartition par domaine */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -529,8 +601,7 @@ const RecapPage = () => {
               </CardContent>
             </Card>
           </motion.div>
-          
-          {/* Graphique de répartition par propriétaire */}
+
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -556,7 +627,6 @@ const RecapPage = () => {
           </motion.div>
         </motion.div>
 
-        {/* Section: Diagramme de Priorisation (Isinhawer) */}
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -576,15 +646,15 @@ const RecapPage = () => {
                     </div>
                     {Object.keys(PRIORITY_MAP).map(priorityLabel => (
                         <div key={priorityLabel} className="grid grid-cols-4 gap-2 mb-2 items-center">
-                            <div className="col-span-1 p-2 rounded-lg text-white" style={{ backgroundColor: PRIORITY_MAP[priorityLabel] }}>
-                                {priorityLabel.split(' ')[0]} {priorityLabel.split(' ')[1]}
+                            <div className="col-span-1 p-2 rounded-lg text-white font-bold" style={{ backgroundColor: PRIORITY_MAP[priorityLabel] }}>
+                                {priorityLabel}
                             </div>
                             {['Facile', 'Moyen', 'Difficile'].map(feasibilityLabel => (
                                 <div
                                     key={feasibilityLabel}
-                                    className="col-span-1 text-center p-2 rounded-lg bg-gray-100 font-bold text-lg"
+                                    className="col-span-1 text-center p-4 rounded-lg bg-gray-100 border border-gray-200 shadow-inner hover:bg-gray-200 transition-colors"
                                 >
-                                    {(stats.prioritesFaisabilites[priorityLabel] || {})[feasibilityLabel] || 0}
+                                    <span className="font-bold text-lg text-gray-900">{(stats.prioritesFaisabilites[priorityLabel] || {})[feasibilityLabel] || 0}</span>
                                 </div>
                             ))}
                         </div>
@@ -594,18 +664,41 @@ const RecapPage = () => {
             </Card>
           </motion.div>
 
-        {/* Section: Listes et Échéances */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 1.4 }}
+        >
+          <Card className="shadow-lg bg-white rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-lg">Détails de la Matrice d'Eisenhower</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 md:p-8">
+              {Object.keys(PRIORITY_MAP).map(priorityLabel => (
+                <div key={priorityLabel} className="space-y-4">
+                  {Object.keys(FEASIBILITY_MAP).map(feasibilityLabel => (
+                    <CollapsibleTable
+                      key={`${priorityLabel}-${feasibilityLabel}`}
+                      audits={getEisenhowerAudits(priorityLabel, feasibilityLabel)}
+                      title={`${priorityLabel.split(' ')[1]} & ${feasibilityLabel}`}
+                    />
+                  ))}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </motion.div>
+        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 1.4 }}
+          transition={{ duration: 0.5, delay: 1.5 }}
           className="grid grid-cols-1 md:grid-cols-2 gap-8"
         >
-          {/* Tableau des échéances proches */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.5 }}
+            transition={{ delay: 1.6 }}
           >
             <Card className="shadow-lg bg-white rounded-2xl">
               <CardHeader>
@@ -638,57 +731,6 @@ const RecapPage = () => {
                           </Badge>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Tableau des audits récents */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.6 }}
-          >
-            <Card className="shadow-lg bg-white rounded-2xl">
-              <CardHeader>
-                <CardTitle className="text-lg">Audits récents</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {recentAudits.length === 0 ? (
-                  <div className="text-center text-gray-500 italic py-8">
-                    <DocumentIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>Aucun audit récent</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {recentAudits.slice(0, 10).map((audit, index) => (
-                      <motion.div
-                        key={audit.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.1 * index }}
-                        className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">
-                            {audit.titre || 'Réglementation sans titre'}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {audit.domaine} • {new Date(audit.updated_at).toLocaleDateString('fr-FR')}
-                          </p>
-                        </div>
-                        <div className="ml-4">
-                          {audit.conformite ? (
-                            <Badge variant={audit.conformite === 'Conforme' ? 'default' : 'destructive'}>
-                              {audit.conformite}
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline">En attente</Badge>
-                          )}
-                        </div>
-                      </motion.div>
                     ))}
                   </div>
                 )}
