@@ -15,7 +15,7 @@ const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('auth_token'));
 
-  const API_BASE = 'http://localhost:3001/api';
+  const API_BASE = 'https://safetysolution.onrender.com/api';
 
   // Vérifier l'authentification au chargement
   useEffect(() => {

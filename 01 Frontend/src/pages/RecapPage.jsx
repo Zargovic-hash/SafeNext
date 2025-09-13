@@ -75,7 +75,7 @@ const RecapPage = () => {
   const [deadlines, setDeadlines] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = 'http://localhost:3001/api';
+  const API_BASE = 'https://safetysolution.onrender.com/api';
 
   const PRIORITY_MAP = {
     '1. Critique 🔴': '#EF4444',

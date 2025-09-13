@@ -17,7 +17,7 @@ const ResetPassword = () => {
   const [error, setError] = useState('');
   const [showPasswords, setShowPasswords] = useState(false);
 
-  const API_BASE = 'http://localhost:3001/api';
+  const API_BASE = 'https://safetysolution.onrender.com/api';
 
   // Vérifier la validité du token au chargement
   useEffect(() => {

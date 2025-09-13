@@ -48,7 +48,7 @@ const ReglementationPage = () => {
     plan_action: ''
   });
 
-  const API_BASE = 'http://localhost:3001/api';
+  const API_BASE = 'https://safetysolution.onrender.com/api';
 
   // Fonction pour basculer en mode plein écran
   const toggleFullscreen = () => {

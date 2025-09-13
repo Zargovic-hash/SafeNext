@@ -7,7 +7,7 @@ const ForgotPassword = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const API_BASE = 'http://localhost:3001/api';
+  const API_BASE = 'https://safetysolution.onrender.com/api';
 
   const handleSubmit = async (e) => {
     e.preventDefault();

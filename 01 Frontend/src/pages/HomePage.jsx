@@ -96,7 +96,7 @@ const HomePage = () => {
     completionRate: 0,
   });
 
-  const API_BASE = 'http://localhost:3001/api';
+  const API_BASE = 'https://safetysolution.onrender.com/api';
 
   useEffect(() => {
     const fetchStats = async () => {
