@@ -19,7 +19,33 @@ if (!process.env.JWT_SECRET) {
 }
 
 // Middleware
-app.use(cors());
+// Configuration CORS pour autoriser votre frontend
+const corsOptions = {
+  origin: [
+    process.env.FRONTEND_URL,                         // Variable d'environnement
+    'https://safetysolution-frontend.onrender.com',  // URL directe (backup)
+    'http://localhost:3000',                          // Dev local
+    'http://localhost:3001'                           // Dev local
+  ].filter(Boolean), // Enlève les valeurs undefined
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
+// Logging pour debug
+app.use((req, res, next) => {
+  console.log(`📡 ${req.method} ${req.path} - Origin: ${req.get('Origin')}`);
+  next();
+});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
