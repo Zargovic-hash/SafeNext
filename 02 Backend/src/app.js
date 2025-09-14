@@ -94,17 +94,5 @@ pool.connect()
   .then(() => console.log("✅ Connected to database"))
   .catch((err) => console.error("❌ Database connection error:", err.stack));
 
-const port = process.env.PORT || 3001;
-app.listen(port, () => {
-  console.log(`🚀 Server running on http://localhost:${port}`);
-  console.log("📋 Available endpoints:");
-  console.log("  🔐 POST /api/auth/register - Inscription");
-  console.log("  🔐 POST /api/auth/login - Connexion");
-  console.log("  👤 GET /api/auth/profile - Profil utilisateur");
-  console.log("  👥 GET /api/users - Gestion utilisateurs (Admin)");
-  console.log("  📊 GET /api/dashboard/stats - Statistiques");
-  console.log("  📋 GET /api/audit - Mes audits");
-  console.log("  📄 GET /api/reglementation - Réglementations");
-});
 
 export default app;

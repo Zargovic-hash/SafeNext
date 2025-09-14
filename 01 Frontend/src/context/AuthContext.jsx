@@ -13,14 +13,11 @@ export const useAuth = () => {
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
-    }
-    return null;
-  });
+  const [token, setToken] = useState(localStorage.getItem('auth_token'));
 
-  const API_BASE = 'https://safetysolution.onrender.com/api';
+const API_BASE = process.env.NODE_ENV === 'production' 
+  ? 'https://safetysolution.onrender.com/api'
+  : 'http://localhost:3001/api';
 
   // Vérifier l'authentification au chargement
   useEffect(() => {
@@ -35,22 +32,14 @@ const AuthProvider = ({ children }) => {
             const userData = await response.json();
             setUser(userData);
           } else {
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('auth_token');
-            }
+            localStorage.removeItem('auth_token');
             setToken(null);
-            setUser(null);
           }
         } catch (error) {
           console.error('Erreur auth:', error);
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('auth_token');
-          }
+          localStorage.removeItem('auth_token');
           setToken(null);
-          setUser(null);
         }
-      } else {
-        setUser(null);
       }
       setLoading(false);
     };
@@ -68,10 +57,8 @@ const AuthProvider = ({ children }) => {
 
       const data = await response.json();
 
-      if (response.ok && data.token && data.user) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('auth_token', data.token);
-        }
+      if (response.ok) {
+        localStorage.setItem('auth_token', data.token);
         setToken(data.token);
         setUser(data.user);
         return { success: true };
@@ -98,10 +85,8 @@ const AuthProvider = ({ children }) => {
 
       const data = await response.json();
 
-      if (response.ok && data.token && data.user) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('auth_token', data.token);
-        }
+      if (response.ok) {
+        localStorage.setItem('auth_token', data.token);
         setToken(data.token);
         setUser(data.user);
         return { success: true };
@@ -124,9 +109,7 @@ const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Erreur logout:', error);
     } finally {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-      }
+      localStorage.removeItem('auth_token');
       setToken(null);
       setUser(null);
     }
