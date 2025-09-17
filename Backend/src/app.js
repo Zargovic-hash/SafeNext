@@ -339,6 +339,9 @@ const startServer = async () => {
   });
 };
 
+app.set('trust proxy', 1);
+
+
 // Gestion propre de l'arrêt
 process.on('SIGTERM', async () => {
   console.log('🔄 Arrêt du serveur en cours...');
@@ -357,6 +360,7 @@ startServer().catch(err => {
   console.error('❌ Erreur fatale:', err);
   process.exit(1);
 });
+
 
 export default app;
 
