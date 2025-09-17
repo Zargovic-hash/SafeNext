@@ -11,6 +11,8 @@ import Label from '../components/ui/Label';
 import { PasswordHideIcon, PasswordViewIcon } from '../icons/icon';
 import { toast } from 'react-toastify';
 
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+
 const ResetPasswordPage = () => {
   const [formData, setFormData] = useState({ password: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
@@ -32,7 +34,7 @@ const ResetPasswordPage = () => {
       }
 
       try {
-        const response = await fetch(`https://safetysolution.onrender.com/api/auth/validate-reset-token/${token}`);
+        const response = await fetch(`${API_BASE}/auth/validate-reset-token/${token}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -99,7 +101,7 @@ const ResetPasswordPage = () => {
     }
 
     try {
-      const response = await fetch(`https://safetysolution.onrender.com/api/auth/reset-password/${token}`, {
+      const response = await fetch(`${API_BASE}/auth/reset-password/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

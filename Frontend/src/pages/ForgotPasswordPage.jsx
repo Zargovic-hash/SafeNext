@@ -10,6 +10,10 @@ import Input from '../components/ui/Input';
 import Label from '../components/ui/Label';
 import { toast } from 'react-toastify';
 
+
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+
+
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,8 +27,8 @@ const ForgotPasswordPage = () => {
     setMessage('');
 
     try {
-      const response = await fetch('https://safetysolution.onrender.com/api/auth/forgot-password', {
-        method: 'POST',
+        const response = await fetch(`${API_BASE}/auth/forgot-password`, {
+          method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
