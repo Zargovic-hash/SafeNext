@@ -10,6 +10,8 @@ import dashboardRoutes from "./routes/dashboard.js";
 import authRoutes from "./routes/auth.js";
 import usersRoutes from "./routes/users.js";
 import { pool } from "./db.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -347,6 +349,19 @@ process.on("SIGINT", async () => {
 startServer().catch((err) => {
   console.error("❌ Erreur fatale:", err);
   process.exit(1);
+});
+
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Servir les fichiers statiques du frontend buildé
+app.use(express.static(path.join(__dirname, "client/build")));
+
+// Fallback : renvoyer index.html pour toutes les routes inconnues
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
 });
 
 export default app;
