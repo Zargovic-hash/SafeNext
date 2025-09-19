@@ -14,6 +14,8 @@ import CardsView from '../components/CardsView.jsx';
 import TableView from '../components/TableView.jsx';
 import SaveMessage from '../components/SaveMessage.jsx';
 import FullscreenOverlay from '../components/FullscreenOverlay.jsx';
+import ReportButton from '../components/ReportButton.jsx';
+import ReportModal from '../components/ReportModal.jsx';
 
 const ReglementationPage = () => {
   const [regulations, setRegulations] = useState([]);
@@ -27,6 +29,7 @@ const ReglementationPage = () => {
   const [saveMessage, setSaveMessage] = useState(null);
   const { token } = useAuth();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
 
   // États pour les filtres avancés avec domaine intégré
@@ -316,6 +319,7 @@ const ReglementationPage = () => {
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           isFullscreen={isFullscreen}
+          onReportClick={() => setShowReportModal(true)}
           toggleFullscreen={toggleFullscreen}
           viewMode={viewMode}
           setViewMode={setViewMode}
@@ -361,6 +365,14 @@ const ReglementationPage = () => {
         onClose={handleCloseAuditModal}
         isSaving={isSaving}
         saveMessage={saveMessage}
+      />
+
+      {/* Modal de génération de rapport */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        type="reglementation"
+        title="Générer un Rapport Réglementation"
       />
 
       {/* Overlay pour le mode plein écran */}

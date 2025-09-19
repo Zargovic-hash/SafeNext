@@ -29,8 +29,8 @@ export const apiRequest = async (endpoint, options = {}) => {
   const config = {
     ...API_CONFIG.getConfig(),
     ...options,
-    // Ajouter signal pour timeout
-    signal: AbortSignal.timeout(API_CONFIG.TIMEOUT)
+    // Ajouter signal pour timeout (compatible avec les navigateurs plus anciens)
+    signal: typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(API_CONFIG.TIMEOUT) : undefined
   };
 
   try {
@@ -57,10 +57,15 @@ export const apiRequest = async (endpoint, options = {}) => {
       throw new Error('Timeout: Le serveur met trop de temps à répondre');
     }
     
-    if (error.message.includes('fetch')) {
+    if (error.message.includes('fetch') || error.message.includes('NetworkError')) {
       throw new Error('Impossible de contacter le serveur. Vérifiez votre connexion.');
     }
     
-    throw error;
+    // Si c'est déjà une erreur formatée, la relancer
+    if (error.message && !error.message.includes('Erreur')) {
+      throw error;
+    }
+    
+    throw new Error(error.message || 'Une erreur inattendue s\'est produite');
   }
 };

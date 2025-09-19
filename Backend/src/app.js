@@ -9,6 +9,7 @@ import auditRoutes from "./routes/audit.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import authRoutes from "./routes/auth.js";
 import usersRoutes from "./routes/users.js";
+import reportRoutes from "./routes/reports.js";
 import { pool } from "./db.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -163,6 +164,7 @@ app.use("/api/users", usersRoutes);
 app.use("/api/reglementation", reglementationRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/reports", reportRoutes);
 
 app.get("/", (req, res) => {
   res.json({
@@ -184,6 +186,7 @@ app.get("/", (req, res) => {
       reglementation: "/api/reglementation",
       audit: "/api/audit",
       dashboard: "/api/dashboard",
+      reports: "/api/reports",
       health: "/health",
       status: "/api/status",
     },
@@ -349,19 +352,6 @@ process.on("SIGINT", async () => {
 startServer().catch((err) => {
   console.error("❌ Erreur fatale:", err);
   process.exit(1);
-});
-
-
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Servir les fichiers statiques du frontend buildé
-app.use(express.static(path.join(__dirname, "client/build")));
-
-// Fallback : renvoyer index.html pour toutes les routes inconnues
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "client/build", "index.html"));
 });
 
 export default app;

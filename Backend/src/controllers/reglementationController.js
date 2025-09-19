@@ -42,13 +42,13 @@ export const getReglementation = async (req, res) => {
         a.conformite, a.Prioritée, a.faisabilite, a.plan_action, a.deadline, a.owner,
         ${isAdmin ? 'u.first_name, u.last_name, u.email as user_email' : 'NULL as first_name, NULL as last_name, NULL as user_email'}
       FROM reglementation_all r
-      LEFT JOIN audit_conformite a ON r.id = a.reglementation_id ${isAdmin ? '' : `AND a.user_id = ${user_id}`}
+      LEFT JOIN audit_conformite a ON r.id = a.reglementation_id ${isAdmin ? '' : `AND a.user_id = $${index++}`}
       ${isAdmin ? 'LEFT JOIN users u ON a.user_id = u.id' : ''}
       ${where}
       ORDER BY r.id;
     `;
 
-    const { rows } = await pool.query(sql, values);
+    const { rows } = await pool.query(sql, isAdmin ? values : [...values, user_id]);
     res.json(rows);
   } catch (err) {
     console.error(err);

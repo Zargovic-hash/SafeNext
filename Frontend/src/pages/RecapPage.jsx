@@ -15,6 +15,8 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 import AuditDetailsTable from '../components/AuditDetailsTable';
 import ChevronDownIcon from '../icons/ChevronDownIcon';
 import ChevronUpIcon from '../icons/ChevronUpIcon';
+import ReportButton from '../components/ReportButton';
+import ReportModal from '../components/ReportModal';
 
 ChartJS.register(
   ArcElement,
@@ -74,6 +76,7 @@ const RecapPage = () => {
   const [allAudits, setAllAudits] = useState([]);
   const [deadlines, setDeadlines] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -406,9 +409,19 @@ const RecapPage = () => {
         >
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Tableau de Bord Général</h1>
-            <Link to="/reglementation">
-              <Button>Voir toutes les réglementations</Button>
-            </Link>
+            <div className="flex gap-3">
+              <ReportButton
+                type="dashboard"
+                variant="outline"
+                size="md"
+                onClick={() => setShowReportModal(true)}
+              >
+                📊 Rapport Dashboard
+              </ReportButton>
+              <Link to="/reglementation">
+                <Button>Voir toutes les réglementations</Button>
+              </Link>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="shadow-lg p-6 bg-white rounded-xl text-center transition-all duration-300 transform hover:scale-105">
@@ -739,6 +752,14 @@ const RecapPage = () => {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Modal de génération de rapport */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        type="dashboard"
+        title="Générer un Rapport Dashboard"
+      />
     </div>
   );
 };

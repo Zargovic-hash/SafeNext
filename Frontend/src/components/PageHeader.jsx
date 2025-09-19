@@ -5,6 +5,7 @@ import { Button, Input, StatusBadge } from "../components/ui/componentsui";
 import { SearchIcon, XIcon, GridIcon, TableIcon } from "../icons/icon";
 import SummaryDashboard from "../components/SummaryDashboard";
 import AdvancedFilters from "../components/AdvancedFilters.jsx";
+import ReportButton from "../components/ReportButton.jsx";
 
 const PageHeader = ({
   filteredRegulations,
@@ -17,7 +18,8 @@ const PageHeader = ({
   setViewMode,
   handleFilterChange,
   handleResetFilters,
-  regulations
+  regulations,
+  onReportClick
 }) => {
   return (
     <motion.div 
@@ -82,6 +84,17 @@ const PageHeader = ({
                 </button>
               )}
             </div>
+
+            {/* Bouton rapport */}
+            <ReportButton
+              type="reglementation"
+              filters={filters}
+              variant="outline"
+              size="sm"
+              onClick={onReportClick}
+            >
+              📊 Rapport
+            </ReportButton>
 
             {/* Bouton plein écran */}
             <Button

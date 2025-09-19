@@ -228,7 +228,7 @@ const HomePage = () => {
             variants={itemVariants}
             className="mt-6 max-w-2xl mx-auto text-xl text-gray-500"
           >
-            ReguAI Audit est la plateforme en ligne qui simplifie et centralise l'audit et la gestion de votre conformité réglementaire. Identifiez rapidement les risques, suivez vos progrès et assurez la conformité de votre organisation.
+            ReguAI Audit est la plateforme en ligne qui simplifie et centralise l'audit et la gestion de votre conformité réglementaire. Identifiez rapidement les faisabilites, suivez vos progrès et assurez la conformité de votre organisation.
           </motion.p>
         </motion.div>
 
