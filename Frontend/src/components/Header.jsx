@@ -20,7 +20,7 @@ const Header = () => {
 
   const navigation = [
     { name: 'Accueil', href: '/', icon: HomeIcon },
-    { name: 'Réglementations', href: '/reglementations', icon: DocumentIcon },
+    { name: 'Réglementations', href: '/reglementation', icon: DocumentIcon },
     { name: 'Récapitulatif', href: '/recap', icon: BarChartIcon }
   ];
 

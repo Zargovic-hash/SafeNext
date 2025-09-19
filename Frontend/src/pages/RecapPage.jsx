@@ -379,7 +379,7 @@ const RecapPage = () => {
             transition={{ delay: 0.2 }}
             className="text-center mt-4 text-sm text-gray-500"
           >
-            <Link to="/reglementations" className="text-blue-600 hover:underline">
+            <Link to="/reglementation" className="text-blue-600 hover:underline">
               Voir plus de détails sur la page réglementations
             </Link>
           </motion.div>
@@ -406,7 +406,7 @@ const RecapPage = () => {
         >
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Tableau de Bord Général</h1>
-            <Link to="/reglementations">
+            <Link to="/reglementation">
               <Button>Voir toutes les réglementations</Button>
             </Link>
           </div>

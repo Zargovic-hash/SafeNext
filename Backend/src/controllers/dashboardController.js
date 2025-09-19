@@ -12,7 +12,7 @@ export const getDashboardStats = async (req, res) => {
     const userValues = isAdmin ? [] : [user_id];
 
     // Statistiques générales
-    const totalReglementations = await pool.query('SELECT COUNT(*) as total FROM reglementation_all');
+    const totalreglementation = await pool.query('SELECT COUNT(*) as total FROM reglementation_all');
     
     const totalAuditsQuery = isAdmin 
       ? 'SELECT COUNT(*) as total FROM audit_conformite'
@@ -102,10 +102,10 @@ export const getDashboardStats = async (req, res) => {
 
     res.json({
       totaux: {
-        reglementations: parseInt(totalReglementations.rows[0].total),
+        reglementation: parseInt(totalreglementation.rows[0].total),
         audits: parseInt(totalAudits.rows[0].total),
-        taux_audit: totalReglementations.rows[0].total > 0 
-          ? Math.round((totalAudits.rows[0].total / totalReglementations.rows[0].total) * 100) 
+        taux_audit: totalreglementation.rows[0].total > 0 
+          ? Math.round((totalAudits.rows[0].total / totalreglementation.rows[0].total) * 100) 
           : 0
       },
       conformite: conformiteStats.rows,

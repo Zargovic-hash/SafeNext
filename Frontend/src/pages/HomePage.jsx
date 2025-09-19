@@ -352,7 +352,7 @@ const HomePage = () => {
             Rejoignez les entreprises qui font confiance à notre plateforme pour leur conformité réglementaire.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/reglementations">
+            <Link to="/reglementation">
               <Button size="lg" variant="secondary" className="text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-all">
                 Commencer maintenant
               </Button>

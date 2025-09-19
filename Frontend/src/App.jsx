@@ -33,7 +33,7 @@ const App = () => {
                   <main className="flex-1">
                     <Routes>
                       <Route path="/" element={<HomePage />} />
-                      <Route path="/reglementations" element={<ReglementationPage />} />
+                      <Route path="/reglementation" element={<ReglementationPage />} />
                       <Route path="/recap" element={<RecapPage />} />
                       <Route path="/profile" element={<ProfilePage />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
