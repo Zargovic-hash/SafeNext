@@ -670,6 +670,121 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+// Ajouter cette fonction dans authController.js
+
+// ============================
+// 🗑️ SUPPRESSION DE COMPTE
+// ============================
+export const deleteAccount = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { current_password } = req.body;
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+
+    console.log(`🗑️ Demande de suppression de compte: ${userEmail}`);
+
+    // Validation du mot de passe actuel requis
+    if (!current_password) {
+      return res.status(400).json({ 
+        error: "Mot de passe actuel requis pour supprimer le compte" 
+      });
+    }
+
+    // Commencer une transaction
+    await client.query("BEGIN");
+
+    // Vérifier le mot de passe actuel
+    const { rows: userRows } = await client.query(
+      "SELECT password_hash FROM users WHERE id = $1 AND is_active = true",
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+
+    const isValidPassword = await bcrypt.compare(current_password, userRows[0].password_hash);
+    if (!isValidPassword) {
+      await client.query("ROLLBACK");
+      console.log(`❌ Mot de passe incorrect pour suppression: ${userEmail}`);
+      return res.status(401).json({ error: "Mot de passe incorrect" });
+    }
+
+    // Log des données à supprimer (pour le suivi)
+    const { rows: auditCount } = await client.query(
+      "SELECT COUNT(*) as count FROM audit_conformite WHERE user_id = $1",
+      [userId]
+    );
+
+    const { rows: resetTokenCount } = await client.query(
+      "SELECT COUNT(*) as count FROM password_reset_tokens WHERE user_id = $1",
+      [userId]
+    );
+
+    console.log(`📊 Données à supprimer pour ${userEmail}:`);
+    console.log(`   ├─ Audits: ${auditCount.rows[0]?.count || 0}`);
+    console.log(`   └─ Tokens de reset: ${resetTokenCount.rows[0]?.count || 0}`);
+
+    // 1. Supprimer tous les audits de l'utilisateur
+    const { rowCount: deletedAudits } = await client.query(
+      "DELETE FROM audit_conformite WHERE user_id = $1",
+      [userId]
+    );
+
+    // 2. Supprimer tous les tokens de réinitialisation de mot de passe
+    const { rowCount: deletedTokens } = await client.query(
+      "DELETE FROM password_reset_tokens WHERE user_id = $1",
+      [userId]
+    );
+
+    // 3. Supprimer l'utilisateur (soft delete d'abord)
+    await client.query(
+      "UPDATE users SET is_active = false, email = CONCAT(email, '_deleted_', EXTRACT(epoch FROM NOW())), updated_at = NOW() WHERE id = $1",
+      [userId]
+    );
+
+    // 4. Hard delete après 30 secondes (optionnel - pour éviter les regrets immédiats)
+    // Dans un vrai système, on pourrait programmer ça différemment
+    await client.query(
+      "DELETE FROM users WHERE id = $1",
+      [userId]
+    );
+
+    // Confirmer la transaction
+    await client.query("COMMIT");
+
+    console.log(`✅ Compte supprimé avec succès: ${userEmail}`);
+    console.log(`   ├─ Audits supprimés: ${deletedAudits}`);
+    console.log(`   └─ Tokens supprimés: ${deletedTokens}`);
+
+    // Réponse de succès
+    res.json({
+      message: "Votre compte et toutes vos données ont été supprimés avec succès",
+      deleted_data: {
+        audits: deletedAudits,
+        reset_tokens: deletedTokens,
+        user_account: true
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("❌ Erreur suppression de compte:", err.message);
+    
+    // Réponse d'erreur générique pour la sécurité
+    res.status(500).json({ 
+      error: "Erreur lors de la suppression du compte",
+      ...(process.env.NODE_ENV === 'development' && { details: err.message })
+    });
+  } finally {
+    client.release();
+  }
+};
+
 // ============================
 // 🚪 DÉCONNEXION
 // ============================
