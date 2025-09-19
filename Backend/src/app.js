@@ -55,6 +55,9 @@ app.use('/api/', limiter);
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'https://safenext-1.onrender.com',
+  'https://safenext-1.onrender.com/api',
+  'https://safetysolution.onrender.com/api/reglementation',
+  'https://safetysolution.onrender.com/api/audit',
   'http://localhost:3000',
   'http://localhost:3001',
   'http://127.0.0.1:3000',
