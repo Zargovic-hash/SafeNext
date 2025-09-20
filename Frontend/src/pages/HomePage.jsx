@@ -16,16 +16,16 @@ ChartJS.register(
   Title
 );
 
-// Composants simples directement dans ce fichier
+// Composants améliorés avec de meilleurs styles
 const Button = ({ children, size, variant, className, ...props }) => {
-  const baseStyle = "font-semibold rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300";
+  const baseStyle = "font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl";
   const sizeStyle = {
-    lg: "px-8 py-4 text-lg",
-  }[size] || "px-6 py-3 text-base";
+    lg: "px-10 py-5 text-lg",
+  }[size] || "px-8 py-4 text-base";
   const variantStyle = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-    secondary: "bg-white text-blue-600 hover:bg-gray-100 focus:ring-blue-500",
-    outline: "border border-white text-white hover:bg-white hover:text-blue-600 focus:ring-white",
+    primary: "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 focus:ring-blue-500 shadow-blue-200",
+    secondary: "bg-gradient-to-r from-white to-gray-50 text-blue-600 hover:from-gray-50 hover:to-gray-100 focus:ring-blue-500 border border-blue-200",
+    outline: "border-2 border-white text-white hover:bg-white hover:text-blue-600 focus:ring-white backdrop-blur-sm",
   }[variant] || "bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400";
 
   return (
@@ -36,53 +36,53 @@ const Button = ({ children, size, variant, className, ...props }) => {
 };
 
 const Card = ({ children, className, ...props }) => (
-  <div className={`bg-white shadow-lg rounded-2xl ${className}`} {...props}>
+  <div className={`bg-white shadow-xl rounded-3xl border border-gray-100 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 ${className}`} {...props}>
     {children}
   </div>
 );
+
 const CardHeader = ({ children, className, ...props }) => (
-  <div className={`p-6 border-b border-gray-200 ${className}`} {...props}>
+  <div className={`p-8 border-b border-gray-100 ${className}`} {...props}>
     {children}
   </div>
 );
+
 const CardTitle = ({ children, className, ...props }) => (
   <h3 className={`text-xl font-bold text-gray-900 ${className}`} {...props}>
     {children}
   </h3>
 );
+
 const CardContent = ({ children, className, ...props }) => (
-  <div className={`p-6 ${className}`} {...props}>
+  <div className={`p-8 ${className}`} {...props}>
     {children}
   </div>
 );
 
-// Icônes directement en SVG pour éviter les dépendances
+// Icônes améliorées avec de meilleurs styles
 const DocumentIcon = (props) => (
-  <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5h-7a2 2 0 01-2-2V5a2 2 0 012-2h7a2 2 0 012 2v14a2 2 0 01-2 2z" />
-  </svg>
-);
-const CheckCircleIcon = (props) => (
-  <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-const BarChartIcon = (props) => (
-  <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-  </svg>
-);
-const CloudIcon = (props) => (
-  <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 014-4h7.586a1 1 0 01.707.293l2.414 2.414a1 1 0 001.414 0l2.414-2.414a1 1 0 011.414 0l2.414 2.414a1 1 0 001.414 0l2.414-2.414a1 1 0 011.414 0zM12 21h.01M16 21h.01M20 21h.01M16 3h.01" />
-  </svg>
-);
-const XCircleIcon = (props) => (
-  <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5h-7a2 2 0 01-2-2V5a2 2 0 012-2h7a2 2 0 012 2v14a2 2 0 01-2 2z" />
   </svg>
 );
 
+const CheckCircleIcon = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const XCircleIcon = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const CloudIcon = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004-4h10a3 3 0 003 3v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z" />
+  </svg>
+);
 
 const HomePage = () => {
   const { user, token } = useAuth();
@@ -161,13 +161,24 @@ const HomePage = () => {
     fetchStats();
   }, [token]);
 
-  // Données pour les graphiques
+  // Données pour les graphiques avec couleurs améliorées
   const conformityData = {
     labels: ['Conformes', 'Non conformes', 'Non applicables', 'En attente'],
     datasets: [{
       data: [stats.conformes, stats.non_conformes, stats.non_applicables, stats.en_attente],
-      backgroundColor: ['#10B981', '#EF4444', '#6B7280', '#F59E0B'],
-      borderWidth: 1,
+      backgroundColor: [
+        'rgba(16, 185, 129, 0.9)',
+        'rgba(239, 68, 68, 0.9)', 
+        'rgba(107, 114, 128, 0.9)',
+        'rgba(245, 158, 11, 0.9)'
+      ],
+      borderColor: [
+        'rgba(16, 185, 129, 1)',
+        'rgba(239, 68, 68, 1)',
+        'rgba(107, 114, 128, 1)',
+        'rgba(245, 158, 11, 1)'
+      ],
+      borderWidth: 2,
     }]
   };
 
@@ -192,145 +203,201 @@ const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-        {/* Nouvelle section de bienvenue */}
+    <div className="min-h-screen animated-bg">
+      <div className="max-w-7xl mx-auto py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
+        {/* Section héro améliorée */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={containerVariants}
-          className="text-center"
+          className="text-center relative"
         >
+          {/* Éléments décoratifs en arrière-plan */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-10 -left-10 w-20 h-20 bg-blue-200 rounded-full opacity-20 animate-pulse"></div>
+            <div className="absolute top-20 -right-10 w-32 h-32 bg-indigo-200 rounded-full opacity-20 animate-pulse delay-1000"></div>
+            <div className="absolute -bottom-10 left-1/2 w-16 h-16 bg-purple-200 rounded-full opacity-20 animate-pulse delay-2000"></div>
+          </div>
+
           <motion.div
             variants={itemVariants}
-            className="flex justify-center mb-8"
+            className="flex justify-center mb-10 relative z-10"
           >
-            <div className="w-24 h-24 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <CloudIcon className="h-12 w-12 text-white" />
+            <div className="w-32 h-32 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-500/25 transform hover:rotate-3 transition-transform duration-300">
+              <CloudIcon className="h-16 w-16 text-white drop-shadow-lg" />
             </div>
           </motion.div>
 
           <motion.h1
             variants={itemVariants}
-            className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold tracking-tight text-gray-900 relative z-10 text-balance"
           >
-            Bienvenue sur <span className="text-blue-600">ReguAI Audit</span>
+            Bienvenue sur{' '}
+            <span className="gradient-text">
+              SafeNext
+            </span>
           </motion.h1>
 
           <motion.p
             variants={itemVariants}
-            className="mt-4 max-w-2xl mx-auto text-sm text-gray-500 font-semibold"
+            className="mt-6 max-w-2xl mx-auto text-sm text-gray-600 font-semibold tracking-wider uppercase relative z-10"
           >
             Développé par le bureau d'étude SafeNex
           </motion.p>
           
           <motion.p
             variants={itemVariants}
-            className="mt-6 max-w-2xl mx-auto text-xl text-gray-500"
+            className="mt-8 max-w-4xl mx-auto text-lg sm:text-xl md:text-2xl text-gray-600 leading-relaxed relative z-10 text-pretty"
           >
-            ReguAI Audit est la plateforme en ligne qui simplifie et centralise l'audit et la gestion de votre conformité réglementaire. Identifiez rapidement les faisabilites, suivez vos progrès et assurez la conformité de votre organisation.
+            SafeNext est la plateforme intelligente qui simplifie et centralise l'audit et la gestion de votre conformité réglementaire. 
+            <span className="text-primary-600 font-semibold"> Identifiez rapidement les faisabilités</span>, suivez vos progrès et 
+            <span className="text-accent-600 font-semibold"> assurez la conformité</span> de votre organisation.
           </motion.p>
         </motion.div>
 
-        {/* Section des statistiques */}
+        {/* Section des statistiques améliorée */}
         {user && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            className="mt-16"
+            transition={{ delay: 0.8, duration: 0.6 }}
+            className="mt-24"
           >
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">
-              Vos performances en un coup d'œil
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="shadow-lg p-6 bg-white rounded-xl text-center transition-all duration-300 transform hover:scale-105">
-                <CardContent className="space-y-2">
-                  <DocumentIcon className="h-10 w-10 text-blue-600 mx-auto" />
-                  <p className="text-4xl font-extrabold text-blue-600">{stats.total}</p>
-                  <p className="mt-1 text-sm font-medium text-gray-500">Audits Totaux</p>
-                </CardContent>
-              </Card>
-              <Card className="shadow-lg p-6 bg-white rounded-xl text-center transition-all duration-300 transform hover:scale-105">
-                <CardContent className="space-y-2">
-                  <CheckCircleIcon className="h-10 w-10 text-green-600 mx-auto" />
-                  <p className="mt-1 text-4xl font-extrabold text-green-600">{stats.conformes}</p>
-                  <p className="mt-1 text-sm font-medium text-gray-500">Audits Conformes</p>
-                </CardContent>
-              </Card>
-              <Card className="shadow-lg p-6 bg-white rounded-xl text-center transition-all duration-300 transform hover:scale-105">
-                <CardContent className="space-y-2">
-                  <XCircleIcon className="h-10 w-10 text-red-600 mx-auto" />
-                  <p className="mt-1 text-4xl font-extrabold text-red-600">{stats.non_conformes}</p>
-                  <p className="mt-1 text-sm font-medium text-gray-500">Audits Non-Conformes</p>
-                </CardContent>
-              </Card>
-              <Card className="shadow-lg p-6 bg-white rounded-xl text-center transition-all duration-300 transform hover:scale-105">
-                <CardContent className="space-y-2">
-                  <DocumentIcon className="h-10 w-10 text-gray-500 mx-auto" />
-                  <p className="mt-1 text-4xl font-extrabold text-gray-500">{stats.non_applicables}</p>
-                  <p className="mt-1 text-sm font-medium text-gray-500">Non Applicables</p>
-                </CardContent>
-              </Card>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-4">
+                Vos performances en un coup d'œil
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 mx-auto rounded-full"></div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+              {[
+                { icon: DocumentIcon, value: stats.total, label: "Audits Totaux", color: "primary", bgGradient: "from-primary-500 to-primary-600" },
+                { icon: CheckCircleIcon, value: stats.conformes, label: "Audits Conformes", color: "success", bgGradient: "from-success-500 to-success-600" },
+                { icon: XCircleIcon, value: stats.non_conformes, label: "Audits Non-Conformes", color: "error", bgGradient: "from-error-500 to-error-600" },
+                { icon: DocumentIcon, value: stats.non_applicables, label: "Non Applicables", color: "secondary", bgGradient: "from-secondary-500 to-secondary-600" }
+              ].map((item, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: 0.9 + index * 0.1, duration: 0.5 }}
+                >
+                  <Card 
+                    className="group hover:scale-105 transition-all duration-300 cursor-pointer overflow-hidden relative card-interactive"
+                    hover={true}
+                    interactive={true}
+                  >
+                    <div className={`absolute inset-0 bg-gradient-to-br ${item.bgGradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                    <CardContent className="space-y-6 text-center relative z-10" padding="lg">
+                      <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${item.bgGradient} flex items-center justify-center shadow-lg`}>
+                        <item.icon className="h-8 w-8 text-white drop-shadow-sm" />
+                      </div>
+                      <div className="space-y-2">
+                        <p className={`text-4xl sm:text-5xl font-extrabold bg-gradient-to-br ${item.bgGradient} bg-clip-text text-transparent`}>
+                          {item.value}
+                        </p>
+                        <p className="text-sm font-semibold text-gray-600 tracking-wide">
+                          {item.label}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
             </div>
           </motion.div>
         )}
 
+        {/* Section graphiques améliorée */}
         {user && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.0 }}
-            className="mt-20"
+            transition={{ delay: 1.2, duration: 0.6 }}
+            className="mt-24"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.2 }}
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1.4, duration: 0.6 }}
               >
-                <Card className="shadow-lg p-6 bg-white rounded-xl">
-                  <CardHeader>
-                    <CardTitle>Répartition par Conformité</CardTitle>
+                <Card className="h-full" hover={true}>
+                  <CardHeader className="text-center" withDivider={true}>
+                    <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900" gradient={true}>
+                      Répartition par Conformité
+                    </CardTitle>
+                    <div className="w-16 h-1 bg-gradient-to-r from-primary-400 to-accent-400 mx-auto mt-2 rounded-full"></div>
                   </CardHeader>
-                  <CardContent className="flex items-center justify-center p-6 md:p-8">
-                    <div className="h-64 w-full flex items-center justify-center">
-                      <Pie data={conformityData} />
+                  <CardContent className="flex items-center justify-center" padding="lg">
+                    <div className="h-64 sm:h-80 w-full flex items-center justify-center">
+                      <Pie 
+                        data={conformityData} 
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: {
+                              position: 'bottom',
+                              labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: {
+                                  size: 12,
+                                  weight: '600'
+                                }
+                              }
+                            }
+                          },
+                          animation: {
+                            animateScale: true,
+                            animateRotate: true
+                          }
+                        }}
+                      />
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
+              
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.3 }}
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1.5, duration: 0.6 }}
               >
-                <Card className="shadow-lg p-6 bg-white rounded-xl h-full flex flex-col justify-center">
-                  <CardHeader>
-                    <CardTitle>Progression de l'audit</CardTitle>
+                <Card className="h-full flex flex-col" hover={true}>
+                  <CardHeader className="text-center" withDivider={true}>
+                    <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900" gradient={true}>
+                      Progression de l'audit
+                    </CardTitle>
+                    <div className="w-16 h-1 bg-gradient-to-r from-success-400 to-primary-400 mx-auto mt-2 rounded-full"></div>
                   </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="relative pt-1">
-                      <div className="flex mb-2 items-center justify-between">
-                        <div>
-                          <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
-                            Complétion
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xs font-semibold inline-block text-blue-600">
-                            {stats.completionRate}%
-                          </span>
-                        </div>
+                  <CardContent className="flex-1 flex flex-col justify-center space-y-8" padding="lg">
+                    <div className="text-center">
+                      <div className="text-5xl sm:text-6xl font-extrabold gradient-text mb-2">
+                        {stats.completionRate}%
                       </div>
-                      <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
-                        <motion.div
-                          style={{ width: `${stats.completionRate}%` }}
-                          initial={{ width: '0%' }}
-                          animate={{ width: `${stats.completionRate}%` }}
-                          transition={{ duration: 1.5 }}
-                          className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600"
-                        ></motion.div>
+                      <p className="text-gray-600 font-semibold">Complété</p>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-semibold text-gray-700">Progression</span>
+                        <span className="text-sm font-bold text-primary-600">{stats.completionRate}%</span>
+                      </div>
+                      <div className="relative">
+                        <div className="overflow-hidden h-4 rounded-full bg-gradient-to-r from-gray-200 to-gray-300">
+                          <motion.div
+                            style={{ width: `${stats.completionRate}%` }}
+                            initial={{ width: '0%' }}
+                            animate={{ width: `${stats.completionRate}%` }}
+                            transition={{ duration: 2, ease: "easeInOut" }}
+                            className="h-full bg-gradient-to-r from-primary-500 to-accent-600 rounded-full shadow-lg relative overflow-hidden"
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                          </motion.div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -340,28 +407,66 @@ const HomePage = () => {
           </motion.div>
         )}
         
-        {/* Call to action */}
+        {/* Call to action amélioré */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 60 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.4 }}
-          className="bg-blue-600 rounded-2xl p-12 text-center text-white mt-20"
+          transition={{ delay: 1.6, duration: 0.8 }}
+          className="relative mt-20 sm:mt-32 overflow-hidden"
         >
-          <h2 className="text-3xl font-bold mb-4">Prêt à commencer ?</h2>
-          <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
-            Rejoignez les entreprises qui font confiance à notre plateforme pour leur conformité réglementaire.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/reglementation">
-              <Button size="lg" variant="secondary" className="text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-all">
-                Commencer maintenant
-              </Button>
-            </Link>
-            <Link to="/recap">
-              <Button size="lg" variant="outline" className="text-lg px-8 py-4 text-white border-white hover:bg-white hover:text-blue-600 transition-all">
-                Tableau de bord
-              </Button>
-            </Link>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-accent-600 to-primary-700 rounded-3xl"></div>
+          <div className="absolute inset-0 bg-black opacity-10 rounded-3xl"></div>
+          
+          {/* Éléments décoratifs */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-3xl">
+            <div className="absolute -top-10 -left-10 w-40 h-40 bg-white opacity-10 rounded-full animate-pulse"></div>
+            <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-white opacity-5 rounded-full animate-pulse delay-1000"></div>
+          </div>
+          
+          <div className="relative z-10 p-8 sm:p-12 lg:p-16 text-center text-white">
+            <motion.h2 
+              className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.8 }}
+            >
+              Prêt à commencer ?
+            </motion.h2>
+            <motion.p 
+              className="text-primary-100 text-lg sm:text-xl mb-8 sm:mb-10 max-w-3xl mx-auto leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 2.0 }}
+            >
+              Rejoignez les entreprises qui font confiance à notre plateforme pour leur conformité réglementaire.
+              <br />
+              <span className="text-white font-semibold">Commencez dès aujourd'hui</span> et transformez votre approche de l'audit.
+            </motion.p>
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 2.2 }}
+            >
+              <Link to="/reglementation">
+                <Button 
+                  size="lg" 
+                  variant="secondary" 
+                  className="text-lg sm:text-xl px-8 sm:px-12 py-4 sm:py-6 font-bold hover:shadow-2xl w-full sm:w-auto"
+                >
+                  🚀 Commencer maintenant
+                </Button>
+              </Link>
+              <Link to="/recap">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="text-lg sm:text-xl px-8 sm:px-12 py-4 sm:py-6 font-bold hover:shadow-2xl w-full sm:w-auto"
+                >
+                  📊 Tableau de bord
+                </Button>
+              </Link>
+            </motion.div>
           </div>
         </motion.div>
       </div>

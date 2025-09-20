@@ -130,44 +130,48 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  // Nouvelle fonction de suppression de compte
-  const deleteAccount = async (currentPassword) => {
-    try {
-      if (!currentPassword) {
-        return { 
-          success: false, 
-          error: 'Mot de passe requis pour la suppression' 
-        };
-      }
-
-      console.log('🗑️ Suppression du compte en cours...');
-
-      const response = await apiRequest('/auth/delete-account', {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ current_password: currentPassword })
-      });
-
-      console.log('✅ Compte supprimé avec succès');
-
-      // Nettoyer l'état local après suppression
-      localStorage.removeItem('auth_token');
-      setToken(null);
-      setUser(null);
-      
-      return { 
-        success: true, 
-        message: response.message || 'Compte supprimé avec succès' 
-      };
-      
-    } catch (error) {
-      console.error('⚠ Erreur deleteAccount:', error);
+// Nouvelle fonction de suppression de compte
+const deleteAccount = async (currentPassword) => {
+  try {
+    if (!currentPassword) {
       return { 
         success: false, 
-        error: error.message || 'Erreur lors de la suppression du compte' 
+        error: 'Mot de passe requis pour la suppression' 
       };
     }
-  };
+
+    console.log('🗑️ Suppression du compte en cours...');
+
+    const response = await apiRequest('/auth/delete-account', {
+      method: 'DELETE',
+      headers: { 
+        "Content-Type": "application/json",   // ✅ correction ajoutée
+        Authorization: `Bearer ${token}` 
+      },
+      body: JSON.stringify({ current_password: currentPassword })
+    });
+
+    console.log('✅ Compte supprimé avec succès');
+
+    // Nettoyer l'état local après suppression
+    localStorage.removeItem('auth_token');
+    setToken(null);
+    setUser(null);
+    
+    return { 
+      success: true, 
+      message: response.message || 'Compte supprimé avec succès' 
+    };
+    
+  } catch (error) {
+    console.error('⚠ Erreur deleteAccount:', error);
+    return { 
+      success: false, 
+      error: error.message || 'Erreur lors de la suppression du compte' 
+    };
+  }
+};
+
 
   // Fonction utilitaire pour faire des requêtes authentifiées
   const authenticatedRequest = async (endpoint, options = {}) => {

@@ -101,37 +101,28 @@ const ProfilePage = () => {
           </CardContent>
         </Card>
 
-        {/* Nouvelle carte de suppression de compte */}
-        <Card className="shadow-lg border-red-200">
-          <CardHeader>
-            <CardTitle className="text-red-600">Zone de Danger</CardTitle>
-            <p className="text-gray-500">Actions irréversibles sur votre compte</p>
-          </CardHeader>
-
+        {/* carte de suppression de compte */}
+        <Card className="border border-gray-200 shadow-sm">
           <CardContent>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <h3 className="text-red-800 font-semibold mb-2">Supprimer mon compte</h3>
-              <p className="text-red-700 text-sm mb-4">
-                Cette action supprimera définitivement votre compte et toutes les données associées :
-              </p>
-              <ul className="text-red-700 text-sm mb-4 list-disc list-inside space-y-1">
-                <li>Tous vos audits de conformité</li>
-                <li>Vos rapports et historiques</li>
-                <li>Vos informations personnelles</li>
-                <li>Votre accès à la plateforme</li>
-              </ul>
-              <p className="text-red-800 text-sm font-semibold mb-4">
-                ⚠️ Cette action est irréversible et ne peut pas être annulée.
-              </p>
+            <div className="flex items-center justify-between py-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-900">
+                  Supprimer mon compte
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Cette action est irréversible. Toutes vos données seront perdues.
+                </p>
+              </div>
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200"
+                className="text-sm font-medium text-red-600 hover:text-red-700 hover:underline"
               >
-                Supprimer mon compte
+                Supprimer
               </button>
             </div>
           </CardContent>
         </Card>
+
       </div>
 
       {/* Modal de confirmation de suppression */}

@@ -17,7 +17,7 @@ const App = () => {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen animated-bg">
           <Routes>
             {/* Routes publiques */}
             <Route path="/login" element={<LoginPage />} />
@@ -30,7 +30,7 @@ const App = () => {
               <ProtectedRoute>
                 <div className="flex flex-col min-h-screen">
                   <Header />
-                  <main className="flex-1">
+                  <main className="flex-1 relative">
                     <Routes>
                       <Route path="/" element={<HomePage />} />
                       <Route path="/reglementation" element={<ReglementationPage />} />

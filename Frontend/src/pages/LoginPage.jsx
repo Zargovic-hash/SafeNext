@@ -3,10 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
-import CardHeader from '../components/ui/CardHeader';
-import CardTitle from '../components/ui/CardTitle';
-import CardContent from '../components/ui/CardContent';
+import Card, { CardHeader, CardTitle, CardContent, CardDescription } from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Label from '../components/ui/Label';
 import DocumentIcon from '../icons/DocumentIcon';
@@ -93,22 +90,36 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center animated-bg py-12 px-4 sm:px-6 lg:px-8">
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 rounded-full opacity-20 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent-200 rounded-full opacity-20 animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-primary-100 to-accent-100 rounded-full opacity-10 animate-pulse delay-2000"></div>
+      </div>
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="max-w-md w-full"
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-md w-full relative z-10"
       >
-        <Card className="shadow-lg">
-          <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center">
-              <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
-                <DocumentIcon className="h-8 w-8 text-white" />
+        <Card className="shadow-large glass border-0">
+          <CardHeader className="space-y-1 text-center pb-8">
+            <motion.div 
+              className="flex justify-center mb-6"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            >
+              <div className="w-20 h-20 bg-gradient-to-br from-primary-600 to-accent-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <DocumentIcon className="h-10 w-10 text-white" />
               </div>
-            </div>
-            <CardTitle className="text-3xl font-bold">Connexion</CardTitle>
-            <p className="text-gray-600">Connectez-vous à votre compte</p>
+            </motion.div>
+            <CardTitle className="text-3xl font-bold gradient-text">Connexion</CardTitle>
+            <CardDescription>
+              Connectez-vous à votre compte SafeNext
+            </CardDescription>
           </CardHeader>
           
           <CardContent>
@@ -131,9 +142,16 @@ const LoginPage = () => {
               </motion.div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Adresse email</Label>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+                  Adresse email
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -143,14 +161,21 @@ const LoginPage = () => {
                   onKeyPress={handleKeyPress}
                   required
                   disabled={loading}
-                  className="transition-all"
+                  size="lg"
                   autoComplete="email"
                   autoFocus
                 />
-              </div>
+              </motion.div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Mot de passe</Label>
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+                  Mot de passe
+                </Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -161,47 +186,56 @@ const LoginPage = () => {
                     onKeyPress={handleKeyPress}
                     required
                     disabled={loading}
-                    className="pr-10"
+                    size="lg"
+                    className="pr-12"
                     autoComplete="current-password"
                   />
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                     disabled={loading}
                     tabIndex={-1}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
                     {showPassword ? 
                       <PasswordHideIcon className="h-5 w-5" /> : 
                       <PasswordViewIcon className="h-5 w-5" />
                     }
-                  </button>
+                  </motion.button>
                 </div>
-              </div>
+              </motion.div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading || !formData.email || !formData.password}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
               >
-                {loading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>Connexion...</span>
-                  </div>
-                ) : (
-                  'Se connecter'
-                )}
-              </Button>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={loading || !formData.email || !formData.password}
+                  loading={loading}
+                >
+                  {loading ? 'Connexion...' : 'Se connecter'}
+                </Button>
+              </motion.div>
             </form>
 
-            <div className="mt-6 space-y-4">
+            <motion.div 
+              className="mt-8 space-y-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
               <div className="text-center">
                 <p className="text-sm text-gray-600">
                   Pas encore de compte ?{' '}
                   <Link 
                     to="/register" 
-                    className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors"
+                    className="text-primary-600 hover:text-primary-700 font-semibold hover:underline transition-colors"
                   >
                     S'inscrire
                   </Link>
@@ -213,13 +247,13 @@ const LoginPage = () => {
                   Mot de passe oublié ?{' '}
                   <Link 
                     to="/forgot-password" 
-                    className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors"
+                    className="text-primary-600 hover:text-primary-700 font-semibold hover:underline transition-colors"
                   >
                     Récupérez votre mot de passe
                   </Link>
                 </p>
               </div>
-            </div>
+            </motion.div>
           </CardContent>
         </Card>
       </motion.div>
