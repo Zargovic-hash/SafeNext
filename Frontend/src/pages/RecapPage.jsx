@@ -907,6 +907,8 @@ const RecapPage = () => {
             </motion.div>
           </div>
 
+        
+        </motion.div>
 
         {/* Upcoming Deadlines */}
         <motion.div
