@@ -1,17 +1,21 @@
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
 
-const StatCard = ({ value, label, color }) => (
-  <div className="flex flex-col items-center justify-center p-1 bg-white rounded-md shadow-sm transform transition-transform duration-300 hover:scale-105 cursor-pointer">
-    <div className={`text-xl font-extrabold ${color}`}>{value}</div>
-    <div className="text-[8px] font-semibold text-gray-400 uppercase tracking-wide text-center leading-tight">{label}</div>
+const StatItem = ({ value, label, color }) => (
+  <div className="flex flex-col items-center justify-center px-1">
+    <span className={`text-xs font-semibold leading-none ${color}`}>
+      {value}
+    </span>
+    <span className="text-[9px] text-gray-500 leading-none">{label}</span>
   </div>
 );
 
 const SummaryDashboard = ({ regulations, className = "" }) => {
   const stats = useMemo(() => {
     const today = new Date();
-    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const thirtyDaysFromNow = new Date(
+      today.getTime() + 30 * 24 * 60 * 60 * 1000
+    );
 
     const initialStats = {
       total: 0,
@@ -26,7 +30,8 @@ const SummaryDashboard = ({ regulations, className = "" }) => {
     const countStats = regulations.reduce((acc, r) => {
       acc.total++;
 
-      const normalizedConformite = r.conformite?.toString().trim().toLowerCase() || "";
+      const normalizedConformite =
+        r.conformite?.toString().trim().toLowerCase() || "";
       switch (normalizedConformite) {
         case "conforme":
           acc.conforme++;
@@ -55,9 +60,17 @@ const SummaryDashboard = ({ regulations, className = "" }) => {
 
       return acc;
     }, initialStats);
-    
-    const elementsAudites = countStats.conforme + countStats.nonConforme + countStats.nonApplicable;
-    const conformiteRate = elementsAudites > 0 ? Math.round(((countStats.conforme + countStats.nonApplicable) / elementsAudites) * 100) : 0;
+
+    const elementsAudites =
+      countStats.conforme + countStats.nonConforme + countStats.nonApplicable;
+    const conformiteRate =
+      elementsAudites > 0
+        ? Math.round(
+            ((countStats.conforme + countStats.nonApplicable) /
+              elementsAudites) *
+              100
+          )
+        : 0;
 
     return {
       ...countStats,
@@ -65,35 +78,35 @@ const SummaryDashboard = ({ regulations, className = "" }) => {
     };
   }, [regulations]);
 
-  const cards = [
+  const items = [
     { value: stats.total, label: "Total", color: "text-gray-900" },
-    { value: stats.conforme, label: "Conforme", color: "text-emerald-500" },
-    { value: stats.nonConforme, label: "Non conforme", color: "text-red-500" },
-    { value: stats.nonApplicable, label: "Non applicable", color: "text-gray-500" },
-    { value: stats.enAttente, label: "En attente", color: "text-amber-500" },
-    { value: stats.deadlinesProches, label: "Échéances proches", color: "text-purple-500" },
-    { value: stats.overdue, label: "En retard", color: "text-rose-500" },
-    { value: `${stats.conformiteRate}%`, label: "Taux conformité", color: "text-indigo-500" },
+    { value: stats.conforme, label: "Conforme", color: "text-emerald-600" },
+    { value: stats.nonConforme, label: "Non conf.", color: "text-red-600" },
+    { value: stats.nonApplicable, label: "N/A", color: "text-gray-500" },
+    { value: stats.enAttente, label: "En attente", color: "text-amber-600" },
+    { value: stats.deadlinesProches, label: "Échéances", color: "text-purple-600" },
+    { value: stats.overdue, label: "Retard", color: "text-rose-600" },
+    { value: `${stats.conformiteRate}%`, label: "Taux conf.", color: "text-indigo-600" },
   ];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-gradient-to-br from-gray-50 to-gray-100 rounded-md shadow-xl p-2 border border-gray-200 ${className}`}
+      className={`w-full border rounded-md bg-white px-2 py-1 flex items-center justify-between overflow-x-auto ${className}`}
+      style={{ minHeight: "24px" }}
     >
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-8 gap-1">
-        {cards.map((item, i) => (
-          <motion.div 
-            key={i} 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-          >
-            <StatCard {...item} />
-          </motion.div>
-        ))}
-      </div>
+      {items.map((item, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.03 }}
+          className="flex-1 text-center min-w-[50px]"
+        >
+          <StatItem {...item} />
+        </motion.div>
+      ))}
     </motion.div>
   );
 };

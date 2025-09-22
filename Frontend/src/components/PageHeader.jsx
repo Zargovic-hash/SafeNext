@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Maximize, Minimize } from "lucide-react";
 import { Button, Input, StatusBadge } from "../components/ui/componentsui";
 import { SearchIcon, XIcon, GridIcon, TableIcon } from "../icons/icon";
+import { Link } from "react-router-dom";
 import SummaryDashboard from "../components/SummaryDashboard";
 import AdvancedFilters from "../components/AdvancedFilters.jsx";
 import ReportButton from "../components/ReportButton.jsx";
@@ -28,21 +29,39 @@ const PageHeader = ({
       className="bg-white/80 backdrop-blur-sm border-b border-gray-200/60 px-4 py-2 shadow-sm"
     >
       <div className="space-y-4">
-        {/* Title and Search Section */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-1 lg:space-y-0">
+        {/* Title + Quick Links + Search Section */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-2 lg:space-y-0">
+          
+          {/* Left section: links + counter */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
+            className="flex items-center space-x-4"
           >
-            <h1 className="text-2xl font-semibold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-              Réglementations
-            </h1>
+            {/* Quick links */}
+            <div className="flex items-center space-x-2">
+              <Link
+                to="/"
+                className="text-sm font-medium text-gray-600 hover:text-blue-600 hover:underline transition-colors"
+              >
+                Accueil
+              </Link>
+              <span className="text-gray-300">/</span>
+              <Link
+                to="/recap"
+                className="text-sm font-medium text-gray-600 hover:text-blue-600 hover:underline transition-colors"
+              >
+                Récapitulatif
+              </Link>
+            </div>
+
+            {/* Counter */}
             <motion.p 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-gray-600 mt-1 flex items-center space-x-2 text-sm"
+              className="text-gray-600 flex items-center space-x-2 text-sm"
             >
               <span className="flex items-center space-x-1">
                 <span className={`inline-block w-2 h-2 rounded-full ${filteredRegulations.length > 0 ? 'bg-green-400' : 'bg-gray-400'}`}></span>
@@ -58,6 +77,7 @@ const PageHeader = ({
             </motion.p>
           </motion.div>
 
+          {/* Right section: search + buttons */}
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -89,23 +109,11 @@ const PageHeader = ({
             <ReportButton
               type="reglementation"
               filters={filters}
-              variant="outline"
               size="sm"
               onClick={onReportClick}
             >
-              📊 Rapport
+               Rapport
             </ReportButton>
-
-            {/* Bouton plein écran */}
-            <Button
-              onClick={toggleFullscreen}
-              variant="outline"
-              size="xs"
-              className="text-gray-600 hover:text-gray-800 hover:bg-gray-50 border-gray-200 hover:border-blue-300 hover:text-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
-              title={isFullscreen ? "Quitter le plein écran" : "Mode plein écran"}
-            >
-              {isFullscreen ? <Minimize className="h-3 w-3" /> : <Maximize className="h-3 w-3" />}
-            </Button>
 
             {/* Toggle view mode */}
             <div className="flex bg-white/70 backdrop-blur-sm border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
@@ -135,9 +143,6 @@ const PageHeader = ({
           </motion.div>
         </div>
 
-        {/* Summary Dashboard */}
-        <SummaryDashboard regulations={filteredRegulations} />
-
         {/* Advanced Filters */}
         <AdvancedFilters
           filters={filters}
@@ -145,6 +150,9 @@ const PageHeader = ({
           onResetFilters={handleResetFilters}
           regulations={regulations}
         />
+
+        {/* Summary Dashboard */}
+        <SummaryDashboard regulations={filteredRegulations} />
       </div>
     </motion.div>
   );

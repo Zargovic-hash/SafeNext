@@ -8,6 +8,7 @@ import moment from "moment";
 // 📊 GÉNÉRATION RAPPORT PDF
 // ============================
 export const generatePDFReport = async (req, res) => {
+  let browser = null;
   try {
     const { type, filters = {} } = req.body;
     const userId = req.user.id;
@@ -15,7 +16,6 @@ export const generatePDFReport = async (req, res) => {
 
     console.log(`📊 Génération rapport PDF - Type: ${type}, Utilisateur: ${userId}`);
 
-    // Récupérer les données selon le type de rapport
     let data, title, filename;
     
     switch (type) {
@@ -32,13 +32,11 @@ export const generatePDFReport = async (req, res) => {
         return res.status(400).json({ error: "Type de rapport non supporté" });
     }
 
-    // Générer le HTML pour le PDF
     const html = generateHTMLReport(data, title, type, filters);
 
-    // Créer le PDF avec Puppeteer
-    const browser = await puppeteer.launch({
+    browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     });
 
     const page = await browser.newPage();
@@ -55,16 +53,22 @@ export const generatePDFReport = async (req, res) => {
       }
     });
 
-    await browser.close();
-
-    // Envoyer le PDF
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(pdfBuffer);
 
   } catch (err) {
     console.error("❌ Erreur génération PDF:", err.message);
-    res.status(500).json({ error: "Erreur lors de la génération du rapport PDF" });
+    console.error("Stack trace:", err.stack);
+    res.status(500).json({ error: `Erreur lors de la génération du rapport PDF: ${err.message}` });
+  } finally {
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeError) {
+        console.error("❌ Erreur fermeture browser:", closeError.message);
+      }
+    }
   }
 };
 
@@ -74,52 +78,88 @@ export const generatePDFReport = async (req, res) => {
 export const generateExcelReport = async (req, res) => {
   try {
     const { type, filters = {} } = req.body;
-    const userId = req.user.id;
-    const isAdmin = req.user.role === 'admin';
+    const userId = req.user?.id;
+    const isAdmin = req.user?.role === 'admin';
 
-    console.log(`📈 Génération rapport Excel - Type: ${type}, Utilisateur: ${userId}`);
-
-    // Récupérer les données selon le type de rapport
-    let data, title, filename;
-    
-    switch (type) {
-      case 'audit':
-        ({ data, title, filename } = await getAuditData(filters, userId, isAdmin));
-        break;
-      case 'dashboard':
-        ({ data, title, filename } = await getDashboardData(filters, userId, isAdmin));
-        break;
-      case 'reglementation':
-        ({ data, title, filename } = await getReglementationData(filters, userId, isAdmin));
-        break;
-      default:
-        return res.status(400).json({ error: "Type de rapport non supporté" });
+    // Validation des données utilisateur
+    if (!userId) {
+      return res.status(401).json({ error: "Utilisateur non authentifié" });
     }
 
-    // Créer le workbook Excel
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet(title);
+    console.log(`📈 Génération rapport Excel - Type: ${type}, Utilisateur: ${userId}`);
+    console.log(`📈 Filtres reçus:`, JSON.stringify(filters, null, 2));
 
-    // Configurer les colonnes selon le type de données
-    configureExcelColumns(worksheet, type, data);
+    let data, title, filename;
+    
+    try {
+      switch (type) {
+        case 'audit':
+          ({ data, title, filename } = await getAuditData(filters, userId, isAdmin));
+          break;
+        case 'dashboard':
+          ({ data, title, filename } = await getDashboardData(filters, userId, isAdmin));
+          break;
+        case 'reglementation':
+          ({ data, title, filename } = await getReglementationData(filters, userId, isAdmin));
+          break;
+        default:
+          return res.status(400).json({ error: "Type de rapport non supporté" });
+      }
+    } catch (dataError) {
+      console.error("❌ Erreur récupération données:", dataError.message);
+      return res.status(500).json({ error: `Erreur lors de la récupération des données: ${dataError.message}` });
+    }
 
-    // Ajouter les données
-    addExcelData(worksheet, data, type);
+    console.log(`📈 Données récupérées: ${Array.isArray(data) ? data.length : 'objet'} éléments`);
 
-    // Appliquer le style
-    applyExcelStyling(worksheet, type);
+    // Vérification des données
+    if (!data) {
+      return res.status(404).json({ error: "Aucune donnée trouvée pour le rapport" });
+    }
 
-    // Générer le buffer Excel
-    const buffer = await workbook.xlsx.writeBuffer();
+    let workbook;
+    try {
+      workbook = new ExcelJS.Workbook();
+      
+      // Métadonnées du workbook
+      workbook.creator = 'SafeNext';
+      workbook.lastModifiedBy = 'SafeNext';
+      workbook.created = new Date();
+      workbook.modified = new Date();
+      workbook.lastPrinted = new Date();
 
-    // Envoyer le fichier Excel
+      // Créer différents worksheets selon le type
+      if (type === 'dashboard') {
+        createDashboardWorksheet(workbook, data);
+      } else {
+        createDataWorksheet(workbook, data, type, title);
+      }
+
+    } catch (workbookError) {
+      console.error("❌ Erreur création workbook:", workbookError.message);
+      return res.status(500).json({ error: `Erreur lors de la création du fichier Excel: ${workbookError.message}` });
+    }
+
+    let buffer;
+    try {
+      buffer = await workbook.xlsx.writeBuffer();
+    } catch (bufferError) {
+      console.error("❌ Erreur génération buffer:", bufferError.message);
+      return res.status(500).json({ error: `Erreur lors de la génération du buffer Excel: ${bufferError.message}` });
+    }
+
+    const excelFilename = filename.replace('.pdf', '.xlsx');
+
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${excelFilename}"`);
+    
+    console.log(`✅ Rapport Excel généré: ${excelFilename}, taille: ${buffer.length} bytes`);
     res.send(buffer);
 
   } catch (err) {
     console.error("❌ Erreur génération Excel:", err.message);
-    res.status(500).json({ error: "Erreur lors de la génération du rapport Excel" });
+    console.error("Stack trace:", err.stack);
+    res.status(500).json({ error: `Erreur lors de la génération du rapport Excel: ${err.message}` });
   }
 };
 
@@ -127,152 +167,195 @@ export const generateExcelReport = async (req, res) => {
 // 📋 RÉCUPÉRATION DES DONNÉES D'AUDIT
 // ============================
 const getAuditData = async (filters, userId, isAdmin) => {
-  let filtersArray = [];
-  let values = [];
-  let index = 1;
+  try {
+    let filtersArray = [];
+    let values = [];
+    let index = 1;
 
-  // Pour les non-admins, filtrer automatiquement par leur user_id
-  if (!isAdmin) {
-    filtersArray.push(`a.user_id = $${index++}`);
-    values.push(userId);
-  } else if (filters.user_id) {
-    filtersArray.push(`a.user_id = $${index++}`);
-    values.push(filters.user_id);
+    // Filtre utilisateur (obligatoire si pas admin)
+    if (!isAdmin) {
+      filtersArray.push(`a.user_id = $${index++}`);
+      values.push(userId);
+    } else if (filters.user_id) {
+      filtersArray.push(`a.user_id = $${index++}`);
+      values.push(filters.user_id);
+    }
+
+    // Autres filtres
+    if (filters.domaine) {
+      filtersArray.push(`r.domaine = $${index++}`);
+      values.push(filters.domaine);
+    }
+
+    if (filters.conformite) {
+      filtersArray.push(`a.conformite = $${index++}`);
+      values.push(filters.conformite);
+    }
+
+    if (filters.date_debut) {
+      filtersArray.push(`a.created_at >= $${index++}`);
+      values.push(filters.date_debut);
+    }
+
+    if (filters.date_fin) {
+      filtersArray.push(`a.created_at <= $${index++}`);
+      values.push(filters.date_fin + ' 23:59:59');
+    }
+
+    const whereClause = filtersArray.length > 0 ? `WHERE ${filtersArray.join(' AND ')}` : '';
+
+    const sql = `
+      SELECT 
+        r.id, r.domaine, r.chapitre, r.sous_chapitre, r.titre, r.exigence,
+        a.conformite, 
+        a."prioritée",
+        a.faisabilite,
+        a.plan_action, 
+        a.deadline, 
+        a.owner,
+        a.created_at, 
+        a.updated_at, 
+        a.user_id,
+        u.first_name, 
+        u.last_name, 
+        u.email as user_email
+      FROM reglementation_all r
+      JOIN audit_conformite a ON r.id = a.reglementation_id
+      LEFT JOIN users u ON a.user_id = u.id
+      ${whereClause}
+      ORDER BY a.updated_at DESC
+      LIMIT 10000
+    `;
+
+    console.log("SQL Audit:", sql);
+    console.log("Values:", values);
+
+    const { rows } = await pool.query(sql, values);
+
+    return {
+      data: rows,
+      title: 'Rapport d\'Audit Réglementaire',
+      filename: `rapport_audit_${moment().format('YYYY-MM-DD_HH-mm-ss')}.pdf`
+    };
+  } catch (error) {
+    console.error("❌ Erreur getAuditData:", error.message);
+    throw new Error(`Erreur lors de la récupération des données d'audit: ${error.message}`);
   }
-
-  if (filters.domaine) {
-    filtersArray.push(`r.domaine = $${index++}`);
-    values.push(filters.domaine);
-  }
-
-  if (filters.conformite) {
-    filtersArray.push(`a.conformite = $${index++}`);
-    values.push(filters.conformite);
-  }
-
-  if (filters.date_debut) {
-    filtersArray.push(`a.created_at >= $${index++}`);
-    values.push(filters.date_debut);
-  }
-
-  if (filters.date_fin) {
-    filtersArray.push(`a.created_at <= $${index++}`);
-    values.push(filters.date_fin + ' 23:59:59');
-  }
-
-  const whereClause = filtersArray.length > 0 ? `WHERE ${filtersArray.join(' AND ')}` : '';
-
-  const sql = `
-    SELECT 
-      r.id, r.domaine, r.chapitre, r.sous_chapitre, r.titre, r.exigence,
-      a.conformite, a.faisabilite, a.faisabilite, a.plan_action, a.deadline, a.owner,
-      a.created_at, a.updated_at, a.user_id,
-      u.first_name, u.last_name, u.email as user_email
-    FROM reglementation_all r
-    JOIN audit_conformite a ON r.id = a.reglementation_id
-    LEFT JOIN users u ON a.user_id = u.id
-    ${whereClause}
-    ORDER BY a.updated_at DESC
-  `;
-
-  const { rows } = await pool.query(sql, values);
-
-  return {
-    data: rows,
-    title: 'Rapport d\'Audit Réglementaire',
-    filename: `rapport_audit_${moment().format('YYYY-MM-DD_HH-mm-ss')}.pdf`
-  };
 };
 
 // ============================
 // 📊 RÉCUPÉRATION DES DONNÉES DASHBOARD
 // ============================
 const getDashboardData = async (filters, userId, isAdmin) => {
-  // Statistiques générales
-  const statsQuery = `
-    SELECT 
-      COUNT(*) as total_audits,
-      COUNT(CASE WHEN conformite = 'Conforme' THEN 1 END) as conformes,
-      COUNT(CASE WHEN conformite = 'Non Conforme' THEN 1 END) as non_conformes,
-      COUNT(CASE WHEN conformite = 'En Cours' THEN 1 END) as en_cours,
-      COUNT(CASE WHEN conformite = 'Non Applicable' THEN 1 END) as non_applicables
-    FROM audit_conformite a
-    ${!isAdmin ? 'WHERE a.user_id = $1' : ''}
-  `;
+  try {
+    let statsValues = [];
+    let statsQuery = `
+      SELECT 
+        COUNT(*) as total_audits,
+        COUNT(CASE WHEN conformite = 'Conforme' THEN 1 END) as conformes,
+        COUNT(CASE WHEN conformite = 'Non Conforme' THEN 1 END) as non_conformes,
+        COUNT(CASE WHEN conformite = 'En Cours' THEN 1 END) as en_cours,
+        COUNT(CASE WHEN conformite = 'Non Applicable' THEN 1 END) as non_applicables
+      FROM audit_conformite a
+    `;
+    
+    let domainQuery = `
+      SELECT 
+        r.domaine,
+        COUNT(*) as total,
+        COUNT(CASE WHEN a.conformite = 'Conforme' THEN 1 END) as conformes,
+        COUNT(CASE WHEN a.conformite = 'Non Conforme' THEN 1 END) as non_conformes
+      FROM reglementation_all r
+      JOIN audit_conformite a ON r.id = a.reglementation_id
+    `;
 
-  const statsValues = !isAdmin ? [userId] : [];
-  const { rows: stats } = await pool.query(statsQuery, statsValues);
+    if (!isAdmin) {
+      statsQuery += ` WHERE a.user_id = $1`;
+      domainQuery += ` WHERE a.user_id = $1`;
+      statsValues = [userId];
+    }
 
-  // Données par domaine
-  const domainQuery = `
-    SELECT 
-      r.domaine,
-      COUNT(*) as total,
-      COUNT(CASE WHEN a.conformite = 'Conforme' THEN 1 END) as conformes,
-      COUNT(CASE WHEN a.conformite = 'Non Conforme' THEN 1 END) as non_conformes
-    FROM reglementation_all r
-    JOIN audit_conformite a ON r.id = a.reglementation_id
-    ${!isAdmin ? 'WHERE a.user_id = $1' : ''}
-    GROUP BY r.domaine
-    ORDER BY r.domaine
-  `;
+    domainQuery += ` GROUP BY r.domaine ORDER BY r.domaine`;
 
-  const { rows: domains } = await pool.query(domainQuery, statsValues);
+    console.log("SQL Stats:", statsQuery);
+    console.log("SQL Domains:", domainQuery);
+    console.log("Values:", statsValues);
 
-  return {
-    data: { stats: stats[0], domains },
-    title: 'Rapport Dashboard',
-    filename: `rapport_dashboard_${moment().format('YYYY-MM-DD_HH-mm-ss')}.pdf`
-  };
+    const { rows: stats } = await pool.query(statsQuery, statsValues);
+    const { rows: domains } = await pool.query(domainQuery, statsValues);
+
+    return {
+      data: { stats: stats[0], domains },
+      title: 'Rapport Dashboard',
+      filename: `rapport_dashboard_${moment().format('YYYY-MM-DD_HH-mm-ss')}.pdf`
+    };
+  } catch (error) {
+    console.error("❌ Erreur getDashboardData:", error.message);
+    throw new Error(`Erreur lors de la récupération des données dashboard: ${error.message}`);
+  }
 };
 
 // ============================
 // 📋 RÉCUPÉRATION DES DONNÉES RÉGLEMENTATION
 // ============================
 const getReglementationData = async (filters, userId, isAdmin) => {
-  let filtersArray = [];
-  let values = [];
-  let index = 1;
+  try {
+    let filtersArray = [];
+    let values = [];
+    let index = 1;
 
-  if (filters.domaine) {
-    filtersArray.push(`r.domaine = $${index++}`);
-    values.push(filters.domaine);
+    if (filters.domaine) {
+      filtersArray.push(`r.domaine = $${index++}`);
+      values.push(filters.domaine);
+    }
+
+    if (filters.titre) {
+      filtersArray.push(`r.titre ILIKE $${index++}`);
+      values.push(`%${filters.titre}%`);
+    }
+
+    if (filters.search) {
+      filtersArray.push(`(
+        r.titre ILIKE $${index} OR 
+        r.exigence ILIKE $${index} OR 
+        r.lois ILIKE $${index} OR 
+        r.documents ILIKE $${index}
+      )`);
+      values.push(`%${filters.search}%`);
+      index++;
+    }
+
+    const whereClause = filtersArray.length > 0 ? `WHERE ${filtersArray.join(' AND ')}` : '';
+
+    let sql = `
+      SELECT 
+        r.id, r.domaine, r.chapitre, r.sous_chapitre, r.titre, r.exigence, r.lois, r.documents,
+        a.conformite, a."prioritée", a.faisabilite, a.plan_action, a.deadline, a.owner
+      FROM reglementation_all r
+      LEFT JOIN audit_conformite a ON r.id = a.reglementation_id
+    `;
+
+    if (!isAdmin) {
+      sql += ` AND a.user_id = ${index}`;
+      values.push(userId);
+    }
+
+    sql += ` ${whereClause} ORDER BY r.id LIMIT 10000`;
+
+    console.log("SQL Reglementation:", sql);
+    console.log("Values:", values);
+
+    const { rows } = await pool.query(sql, values);
+
+    return {
+      data: rows,
+      title: 'Rapport Réglementation',
+      filename: `rapport_reglementation_${moment().format('YYYY-MM-DD_HH-mm-ss')}.pdf`
+    };
+  } catch (error) {
+    console.error("❌ Erreur getReglementationData:", error.message);
+    throw new Error(`Erreur lors de la récupération des données réglementation: ${error.message}`);
   }
-
-  if (filters.titre) {
-    filtersArray.push(`r.titre = $${index++}`);
-    values.push(filters.titre);
-  }
-
-  if (filters.search) {
-    filtersArray.push(`to_tsvector('french', 
-      coalesce(r.titre,'') || ' ' ||
-      coalesce(r.exigence,'') || ' ' ||
-      coalesce(r.lois,'') || ' ' ||
-      coalesce(r.documents,'')
-    ) @@ plainto_tsquery('french', $${index++})`);
-    values.push(filters.search);
-  }
-
-  const whereClause = filtersArray.length > 0 ? `WHERE ${filtersArray.join(' AND ')}` : '';
-
-  const sql = `
-    SELECT 
-      r.id, r.domaine, r.chapitre, r.sous_chapitre, r.titre, r.exigence, r.lois, r.documents,
-      a.conformite, a.faisabilite, a.faisabilite, a.plan_action, a.deadline, a.owner
-    FROM reglementation_all r
-    LEFT JOIN audit_conformite a ON r.id = a.reglementation_id ${!isAdmin ? `AND a.user_id = ${userId}` : ''}
-    ${whereClause}
-    ORDER BY r.id
-  `;
-
-  const { rows } = await pool.query(sql, values);
-
-  return {
-    data: rows,
-    title: 'Rapport Réglementation',
-    filename: `rapport_reglementation_${moment().format('YYYY-MM-DD_HH-mm-ss')}.pdf`
-  };
 };
 
 // ============================
@@ -283,12 +366,17 @@ const generateHTMLReport = (data, title, type, filters) => {
   
   let content = '';
   
-  if (type === 'dashboard') {
-    content = generateDashboardHTML(data, filters);
-  } else if (type === 'audit') {
-    content = generateAuditHTML(data, filters);
-  } else {
-    content = generateReglementationHTML(data, filters);
+  try {
+    if (type === 'dashboard') {
+      content = generateDashboardHTML(data);
+    } else if (type === 'audit') {
+      content = generateAuditHTML(data);
+    } else {
+      content = generateReglementationHTML(data);
+    }
+  } catch (error) {
+    console.error("❌ Erreur génération HTML:", error.message);
+    content = `<p>Erreur lors de la génération du contenu: ${error.message}</p>`;
   }
 
   return `
@@ -328,26 +416,17 @@ const generateHTMLReport = (data, title, type, filters) => {
           margin-bottom: 20px;
           font-size: 12px;
         }
-        .filters h3 { 
-          margin: 0 0 10px 0; 
-          color: #495057;
-        }
-        .filters span { 
-          background: #e9ecef; 
-          padding: 2px 8px; 
-          border-radius: 3px; 
-          margin-right: 5px;
-        }
         table { 
           width: 100%; 
           border-collapse: collapse; 
           margin-top: 20px;
-          font-size: 12px;
+          font-size: 10px;
         }
         th, td { 
           border: 1px solid #dee2e6; 
-          padding: 8px; 
+          padding: 4px; 
           text-align: left;
+          vertical-align: top;
         }
         th { 
           background: #3b82f6; 
@@ -388,9 +467,6 @@ const generateHTMLReport = (data, title, type, filters) => {
           border-top: 1px solid #dee2e6;
           padding-top: 10px;
         }
-        .page-break { 
-          page-break-before: always; 
-        }
       </style>
     </head>
     <body>
@@ -405,7 +481,7 @@ const generateHTMLReport = (data, title, type, filters) => {
           <h3>Filtres appliqués :</h3>
           ${Object.entries(filters).map(([key, value]) => 
             `<span><strong>${key}:</strong> ${value}</span>`
-          ).join('')}
+          ).join(' • ')}
         </div>
       ` : ''}
       
@@ -421,27 +497,27 @@ const generateHTMLReport = (data, title, type, filters) => {
 };
 
 // ============================
-// 📊 HTML POUR DASHBOARD
+// 📊 HTML DASHBOARD
 // ============================
-const generateDashboardHTML = (data, filters) => {
+const generateDashboardHTML = (data) => {
   const { stats, domains } = data;
   
   return `
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-number">${stats.total_audits}</div>
+        <div class="stat-number">${stats?.total_audits || 0}</div>
         <div class="stat-label">Total Audits</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number">${stats.conformes}</div>
+        <div class="stat-number">${stats?.conformes || 0}</div>
         <div class="stat-label">Conformes</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number">${stats.non_conformes}</div>
+        <div class="stat-number">${stats?.non_conformes || 0}</div>
         <div class="stat-label">Non Conformes</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number">${stats.en_cours}</div>
+        <div class="stat-number">${stats?.en_cours || 0}</div>
         <div class="stat-label">En Cours</div>
       </div>
     </div>
@@ -454,30 +530,30 @@ const generateDashboardHTML = (data, filters) => {
           <th>Total</th>
           <th>Conformes</th>
           <th>Non Conformes</th>
-          <th>Taux de Conformité</th>
+          <th>Taux</th>
         </tr>
       </thead>
       <tbody>
-        ${domains.map(domain => `
+        ${domains?.map(domain => `
           <tr>
-            <td>${domain.domaine}</td>
-            <td>${domain.total}</td>
-            <td>${domain.conformes}</td>
-            <td>${domain.non_conformes}</td>
-            <td>${domain.total > 0 ? Math.round((domain.conformes / domain.total) * 100) : 0}%</td>
+            <td>${domain?.domaine || 'N/A'}</td>
+            <td>${domain?.total || 0}</td>
+            <td>${domain?.conformes || 0}</td>
+            <td>${domain?.non_conformes || 0}</td>
+            <td>${domain?.total > 0 ? Math.round((domain.conformes / domain.total) * 100) : 0}%</td>
           </tr>
-        `).join('')}
+        `).join('') || '<tr><td colspan="5">Aucune donnée disponible</td></tr>'}
       </tbody>
     </table>
   `;
 };
 
 // ============================
-// 📋 HTML POUR AUDIT
+// 📋 HTML AUDIT
 // ============================
-const generateAuditHTML = (data, filters) => {
+const generateAuditHTML = (data) => {
   return `
-    <h3>Détail des Audits (${data.length} éléments)</h3>
+    <h3>Détail des Audits (${data?.length || 0} éléments)</h3>
     <table>
       <thead>
         <tr>
@@ -485,202 +561,228 @@ const generateAuditHTML = (data, filters) => {
           <th>Domaine</th>
           <th>Titre</th>
           <th>Conformité</th>
-          <th>faisabilite</th>
+          <th>Priorité</th>
+          <th>Faisabilité</th>
           <th>Responsable</th>
           <th>Échéance</th>
-          <th>Date Création</th>
+          <th>Date</th>
         </tr>
       </thead>
       <tbody>
-        ${data.map(audit => `
+        ${data?.map(audit => `
           <tr>
-            <td>${audit.id}</td>
-            <td>${audit.domaine}</td>
-            <td>${audit.titre}</td>
-            <td>${audit.conformite}</td>
-            <td>${audit.faisabilite }</td>
-            <td>${audit.owner}</td>
-            <td>${audit.deadline ? moment(audit.deadline).format('DD/MM/YYYY') : 'N/A'}</td>
-            <td>${moment(audit.created_at).format('DD/MM/YYYY')}</td>
+            <td>${audit?.id || 'N/A'}</td>
+            <td>${audit?.domaine || 'N/A'}</td>
+            <td>${audit?.titre || 'N/A'}</td>
+            <td>${audit?.conformite || 'N/A'}</td>
+            <td>${audit?.prioritée || 'N/A'}</td>
+            <td>${audit?.faisabilite || 'N/A'}</td>
+            <td>${audit?.owner || 'N/A'}</td>
+            <td>${audit?.deadline ? moment(audit.deadline).format('DD/MM/YYYY') : 'N/A'}</td>
+            <td>${audit?.created_at ? moment(audit.created_at).format('DD/MM/YYYY') : 'N/A'}</td>
           </tr>
-        `).join('')}
+        `).join('') || '<tr><td colspan="9">Aucune donnée disponible</td></tr>'}
       </tbody>
     </table>
   `;
 };
 
 // ============================
-// 📋 HTML POUR RÉGLEMENTATION
+// 📋 HTML RÉGLEMENTATION
 // ============================
-const generateReglementationHTML = (data, filters) => {
+const generateReglementationHTML = (data) => {
   return `
-    <h3>Réglementation (${data.length} éléments)</h3>
+    <h3>Réglementation (${data?.length || 0} éléments)</h3>
     <table>
       <thead>
         <tr>
           <th>ID</th>
           <th>Domaine</th>
           <th>Chapitre</th>
-          <th>Sous-Chapitre</th>
           <th>Titre</th>
           <th>Exigence</th>
           <th>Conformité</th>
-          <th>Plan d'Action</th>
-          <th>Responsable</th>  
-          <th>Echeance</th>      
+          <th>Responsable</th>
+          <th>Échéance</th>
         </tr>
       </thead>
       <tbody>
-        ${data.map(reg => `
+        ${data?.map(reg => `
           <tr>
-            <td>${reg.id}</td>
-            <td>${reg.domaine}</td>
-            <td>${reg.chapitre}</td>
-            <td>${reg.sous_chapitre}</td>
-            <td>${reg.titre}</td>
-            <td>${reg.exigence ? reg.exigence.substring(0, 100) + '...' : 'N/A'}</td>
-            <td>${reg.conformite || 'Non audité'}</td>
-            <td>${reg.plan_action || 'N/A'}</td>
-            <td>${reg.owner || 'N/A'}</td>
-            <td>${reg.deadline ? moment(reg.deadline).format('DD/MM/YYYY') : 'N/A'}</td>
+            <td>${reg?.id || 'N/A'}</td>
+            <td>${reg?.domaine || 'N/A'}</td>
+            <td>${reg?.chapitre || 'N/A'}</td>
+            <td>${reg?.titre || 'N/A'}</td>
+            <td>${reg?.exigence ? (reg.exigence.length > 60 ? reg.exigence.substring(0, 60) + '...' : reg.exigence) : 'N/A'}</td>
+            <td>${reg?.conformite || 'Non audité'}</td>
+            <td>${reg?.owner || 'N/A'}</td>
+            <td>${reg?.deadline ? moment(reg.deadline).format('DD/MM/YYYY') : 'N/A'}</td>
           </tr>
-        `).join('')}
+        `).join('') || '<tr><td colspan="8">Aucune donnée disponible</td></tr>'}
       </tbody>
     </table>
   `;
 };
 
 // ============================
-// 📊 AJOUT DONNÉES EXCEL - CORRIGÉE MAIS GARDE VOTRE LOGIQUE
+// 📊 CRÉATION WORKSHEET DASHBOARD
 // ============================
-const addExcelData = (worksheet, data, type) => {
-  if (type === 'dashboard') {
-    // Ajouter les statistiques générales
-    worksheet.addRow(['STATISTIQUES GÉNÉRALES']);
-    worksheet.addRow(['Total Audits', data.stats.total_audits]);
-    worksheet.addRow(['Conformes', data.stats.conformes]);
-    worksheet.addRow(['Non Conformes', data.stats.non_conformes]);
-    worksheet.addRow(['En Cours', data.stats.en_cours]);
-    worksheet.addRow(['Non Applicables', data.stats.non_applicables]);
-    worksheet.addRow([]); // Ligne vide
+const createDashboardWorksheet = (workbook, data) => {
+  try {
+    const worksheet = workbook.addWorksheet('Dashboard');
     
-    // Ajouter les données par domaine
-    worksheet.addRow(['RÉPARTITION PAR DOMAINE']);
-    worksheet.addRow(['Domaine', 'Total', 'Conformes', 'Non Conformes', 'Taux Conformité']);
+    // En-têtes
+    worksheet.addRow(['Métrique', 'Valeur']);
     
-    data.domains.forEach(domain => {
-      worksheet.addRow([
-        domain.domaine,
-        domain.total,
-        domain.conformes,
-        domain.non_conformes,
-        domain.total > 0 ? Math.round((domain.conformes / domain.total) * 100) + '%' : '0%'
-      ]);
-    });
-  } else {
-    // CORRECTION ICI : au lieu d'utiliser des objets, on utilise des tableaux comme votre logique originale
-    data.forEach(row => {
-      const excelRow = [];
-      
-      if (type === 'audit') {
-        // Ordre exact selon configureExcelColumns pour audit
-        excelRow.push(row.id);
-        excelRow.push(row.domaine);
-        excelRow.push(row.titre);
-        excelRow.push(row.conformite || 'N/A');
-        excelRow.push(row.faisabilite || 'N/A');
-        excelRow.push(row.plan_action || 'N/A'); // AJOUTÉ
-        excelRow.push(row.owner || 'N/A');       // AJOUTÉ
-        excelRow.push(row.deadline ? moment(row.deadline).format('DD/MM/YYYY') : 'N/A');
-        excelRow.push(moment(row.created_at).format('DD/MM/YYYY'));
-        
-      } else { // reglementation
-        // Ordre exact selon configureExcelColumns pour reglementation
-        excelRow.push(row.id);
-        excelRow.push(row.domaine);
-        excelRow.push(row.chapitre || 'N/A');
-        excelRow.push(row.sous_chapitre || 'N/A');
-        excelRow.push(row.titre);
-        excelRow.push(row.exigence ? (row.exigence.length > 100 ? row.exigence.substring(0, 100) + '...' : row.exigence) : 'N/A');
-        excelRow.push(row.conformite || 'Non audité');
-        excelRow.push(row.plan_action || 'N/A');  // AJOUTÉ
-        excelRow.push(row.owner || 'N/A');        // AJOUTÉ
-        excelRow.push(row.deadline ? moment(row.deadline).format('DD/MM/YYYY') : 'N/A'); // AJOUTÉ
-      }
-      
-      worksheet.addRow(excelRow);
-    });
+    // Statistiques générales
+    const stats = data?.stats || {};
+    worksheet.addRow(['Total Audits', stats.total_audits || 0]);
+    worksheet.addRow(['Conformes', stats.conformes || 0]);
+    worksheet.addRow(['Non Conformes', stats.non_conformes || 0]);
+    worksheet.addRow(['En Cours', stats.en_cours || 0]);
+    worksheet.addRow(['Non Applicables', stats.non_applicables || 0]);
+    
+    // Ligne vide
+    worksheet.addRow(['', '']);
+    
+    // En-têtes pour domaines
+    worksheet.addRow(['Domaine', 'Total', 'Conformes', 'Non Conformes', 'Taux']);
+    
+    // Données par domaine
+    if (data?.domains && Array.isArray(data.domains)) {
+      data.domains.forEach(domain => {
+        const taux = domain?.total > 0 ? Math.round((domain.conformes / domain.total) * 100) : 0;
+        worksheet.addRow([
+          domain?.domaine || 'N/A',
+          domain?.total || 0,
+          domain?.conformes || 0,
+          domain?.non_conformes || 0,
+          `${taux}%`
+        ]);
+      });
+    }
+    
+    // Styliser
+    styleWorksheet(worksheet);
+  } catch (error) {
+    console.error("❌ Erreur createDashboardWorksheet:", error.message);
+    throw error;
   }
 };
 
 // ============================
-// 📊 CONFIGURATION COLONNES EXCEL - AVEC LES COLONNES MANQUANTES
+// 📊 CRÉATION WORKSHEET DATA
 // ============================
-const configureExcelColumns = (worksheet, type, data) => {
-  if (type === 'dashboard') {
-    worksheet.columns = [
-      { header: 'Domaine', key: 'domaine', width: 20 },
-      { header: 'Total', key: 'total', width: 10 },
-      { header: 'Conformes', key: 'conformes', width: 12 },
-      { header: 'Non Conformes', key: 'non_conformes', width: 15 },
-      { header: 'Taux Conformité', key: 'taux', width: 15 }
-    ];
-  } else if (type === 'audit') {
-    worksheet.columns = [
-      { header: 'ID', key: 'id', width: 8 },
-      { header: 'Domaine', key: 'domaine', width: 15 },
-      { header: 'Titre', key: 'titre', width: 30 },
-      { header: 'Conformité', key: 'conformite', width: 12 },
-      { header: 'Faisabilité', key: 'faisabilite', width: 12 },
-      { header: 'Plan d\'Action', key: 'plan_action', width: 25 }, // AJOUTÉ
-      { header: 'Responsable', key: 'owner', width: 15 },
-      { header: 'Échéance', key: 'deadline', width: 12 },
-      { header: 'Date Création', key: 'created_at', width: 15 }
-    ];
-  } else { // reglementation
-    worksheet.columns = [
-      { header: 'ID', key: 'id', width: 8 },
-      { header: 'Domaine', key: 'domaine', width: 15 },
-      { header: 'Chapitre', key: 'chapitre', width: 15 },
-      { header: 'Sous-Chapitre', key: 'sous_chapitre', width: 15 },
-      { header: 'Titre', key: 'titre', width: 30 },
-      { header: 'Exigence', key: 'exigence', width: 40 },
-      { header: 'Conformité', key: 'conformite', width: 12 },
-      { header: 'Plan d\'Action', key: 'plan_action', width: 25 }, // AJOUTÉ
-      { header: 'Responsable', key: 'owner', width: 15 },         // AJOUTÉ
-      { header: 'Échéance', key: 'deadline', width: 12 }         // AJOUTÉ
-    ];
+const createDataWorksheet = (workbook, data, type, title) => {
+  try {
+    const worksheet = workbook.addWorksheet(title.substring(0, 31)); // Excel limite à 31 caractères
+    
+    if (!Array.isArray(data)) {
+      worksheet.addRow(['Erreur', 'Les données ne sont pas dans le bon format']);
+      return;
+    }
+
+    if (data.length === 0) {
+      worksheet.addRow(['Information', 'Aucune donnée disponible']);
+      return;
+    }
+    
+    if (type === 'audit') {
+      // En-têtes audit
+      worksheet.addRow(['ID', 'Domaine', 'Titre', 'Conformité', 'Priorité', 'Faisabilité', 'Plan Action', 'Responsable', 'Échéance', 'Date Création']);
+      
+      // Données audit
+      data.forEach(audit => {
+        worksheet.addRow([
+          audit?.id || 'N/A',
+          audit?.domaine || 'N/A',
+          audit?.titre || 'N/A',
+          audit?.conformite || 'N/A',
+          audit?.prioritée || 'N/A',
+          audit?.faisabilite || 'N/A',
+          audit?.plan_action || 'N/A',
+          audit?.owner || 'N/A',
+          audit?.deadline ? moment(audit.deadline).format('DD/MM/YYYY') : 'N/A',
+          audit?.created_at ? moment(audit.created_at).format('DD/MM/YYYY') : 'N/A'
+        ]);
+      });
+    } else {
+      // En-têtes réglementation
+      worksheet.addRow(['ID', 'Domaine', 'Chapitre', 'Sous-Chapitre', 'Titre', 'Exigence', 'Conformité', 'Priorité', 'Faisabilité', 'Plan Action', 'Responsable', 'Échéance']);
+      
+      // Données réglementation
+      data.forEach(reg => {
+        worksheet.addRow([
+          reg?.id || 'N/A',
+          reg?.domaine || 'N/A',
+          reg?.chapitre || 'N/A',
+          reg?.sous_chapitre || 'N/A',
+          reg?.titre || 'N/A',
+          reg?.exigence || 'N/A',
+          reg?.conformite || 'Non audité',
+          reg?.prioritée || 'N/A',
+          reg?.faisabilite || 'N/A',
+          reg?.plan_action || 'N/A',
+          reg?.owner || 'N/A',
+          reg?.deadline ? moment(reg.deadline).format('DD/MM/YYYY') : 'N/A'
+        ]);
+      });
+    }
+    
+    // Styliser
+    styleWorksheet(worksheet);
+  } catch (error) {
+    console.error("❌ Erreur createDataWorksheet:", error.message);
+    throw error;
   }
 };
 
 // ============================
-// 🎨 STYLISATION EXCEL
+// 🎨 STYLISATION WORKSHEET
 // ============================
-const applyExcelStyling = (worksheet, type) => {
-  // Style pour les en-têtes
-  worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-  worksheet.getRow(1).fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FF3B82F6' }
-  };
-
-  // Bordures pour toutes les cellules
-  worksheet.eachRow((row, rowNumber) => {
-    row.eachCell((cell, colNumber) => {
-      cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
-      };
+const styleWorksheet = (worksheet) => {
+  try {
+    // Style en-têtes
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF3B82F6' }
+    };
+    
+    // Bordures et alignement
+    worksheet.eachRow((row, rowNumber) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+        cell.alignment = { 
+          vertical: 'middle', 
+          horizontal: 'left',
+          wrapText: true 
+        };
+      });
     });
-  });
-
-  // Alignement
-  worksheet.eachRow((row, rowNumber) => {
-    row.eachCell((cell, colNumber) => {
-      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    
+    // Auto-ajuster colonnes
+    worksheet.columns.forEach(column => {
+      let maxLength = 0;
+      column.eachCell({ includeEmpty: true }, (cell) => {
+        if (cell.value) {
+          const columnLength = cell.value.toString().length;
+          if (columnLength > maxLength) {
+            maxLength = columnLength;
+          }
+        }
+      });
+      column.width = maxLength < 10 ? 10 : maxLength > 50 ? 50 : maxLength + 2;
     });
-  });
+  } catch (error) {
+    console.error("❌ Erreur styleWorksheet:", error.message);
+    // Ne pas rethrow pour éviter de bloquer la génération
+  }
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import AuthProvider from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Header from './components/Header';
@@ -12,6 +12,29 @@ import ReglementationPage from './pages/ReglementationPage';
 import ProfilePage from './pages/ProfilePage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+
+const Layout = () => {
+  const location = useLocation();
+
+  // On masque le header uniquement pour la page Reglementation
+  const hideHeader = location.pathname === "/reglementation";
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      {!hideHeader && <Header />}
+      <main className="flex-1 relative">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/reglementation" element={<ReglementationPage />} />
+          <Route path="/recap" element={<RecapPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
+  );
+};
 
 const App = () => {
   return (
@@ -26,23 +49,14 @@ const App = () => {
             <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
             {/* Routes protégées */}
-            <Route path="/*" element={
-              <ProtectedRoute>
-                <div className="flex flex-col min-h-screen">
-                  <Header />
-                  <main className="flex-1 relative">
-                    <Routes>
-                      <Route path="/" element={<HomePage />} />
-                      <Route path="/reglementation" element={<ReglementationPage />} />
-                      <Route path="/recap" element={<RecapPage />} />
-                      <Route path="/profile" element={<ProfilePage />} />
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                  </main>
-                  <Footer />
-                </div>
-              </ProtectedRoute>
-            } />
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </div>
       </Router>

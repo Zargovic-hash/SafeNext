@@ -764,7 +764,6 @@ const RecapPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <ReportButton
               type="dashboard"
-              variant="outline"
               size="md"
               onClick={() => setShowReportModal(true)}
               className="transform hover:scale-105 transition-all duration-200"
