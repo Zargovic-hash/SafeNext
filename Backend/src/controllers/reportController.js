@@ -40,7 +40,7 @@ export const generatePDFReport = async (req, res) => {
     });
 
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+await page.setContent(html, { waitUntil: 'domcontentloaded' });
     
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -55,7 +55,7 @@ export const generatePDFReport = async (req, res) => {
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(pdfBuffer);
+    res.end(pdfBuffer);
 
   } catch (err) {
     console.error("❌ Erreur génération PDF:", err.message);
@@ -202,8 +202,11 @@ const getAuditData = async (filters, userId, isAdmin) => {
       values.push(filters.date_fin + ' 23:59:59');
     }
 
-    const whereClause = filtersArray.length > 0 ? `WHERE ${filtersArray.join(' AND ')}` : '';
-
+if (!filtersArray.includes(`a.conformite IS NOT NULL`)) {
+  filtersArray.push(`a.conformite IS NOT NULL`);
+  filtersArray.push(`a.conformite != 'Non audité'`);
+}
+const whereClause = filtersArray.length > 0 ? `WHERE ${filtersArray.join(' AND ')}` : '';
     const sql = `
       SELECT 
         r.id, r.domaine, r.chapitre, r.sous_chapitre, r.titre, r.exigence,
@@ -325,8 +328,11 @@ const getReglementationData = async (filters, userId, isAdmin) => {
       index++;
     }
 
-    const whereClause = filtersArray.length > 0 ? `WHERE ${filtersArray.join(' AND ')}` : '';
-
+if (!filtersArray.includes(`a.conformite IS NOT NULL`)) {
+  filtersArray.push(`a.conformite IS NOT NULL`);
+  filtersArray.push(`a.conformite != 'Non audité'`);
+}
+const whereClause = filtersArray.length > 0 ? `WHERE ${filtersArray.join(' AND ')}` : '';
     let sql = `
       SELECT 
         r.id, r.domaine, r.chapitre, r.sous_chapitre, r.titre, r.exigence, r.lois, r.documents,
@@ -335,10 +341,6 @@ const getReglementationData = async (filters, userId, isAdmin) => {
       LEFT JOIN audit_conformite a ON r.id = a.reglementation_id
     `;
 
-    if (!isAdmin) {
-      sql += ` AND a.user_id = ${index}`;
-      values.push(userId);
-    }
 
     sql += ` ${whereClause} ORDER BY r.id LIMIT 10000`;
 

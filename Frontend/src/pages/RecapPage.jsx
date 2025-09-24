@@ -16,7 +16,6 @@ import AuditDetailsTable from '../components/AuditDetailsTable';
 import ChevronDownIcon from '../icons/ChevronDownIcon';
 import ChevronUpIcon from '../icons/ChevronUpIcon';
 import ReportButton from '../components/ReportButton';
-import ReportModal from '../components/ReportModal';
 import CheckCircleIcon from '../icons/CheckCircleIcon';
 import XCircleIcon from '../icons/XCircleIcon';
 import AlertCircleIcon from '../icons/AlertCircleIcon';
@@ -126,7 +125,6 @@ const EisenhowerMatrix = ({ allAudits }) => {
         subtitle: 'À faire immédiatement', 
         actions: q1, 
         color: 'border-red-300 bg-gradient-to-br from-red-50 to-red-100', 
-        icon: '🔥', 
         headerColor: 'text-red-700 bg-gradient-to-r from-red-100 to-red-200',
         bgGradient: 'from-red-500 to-red-600'
       },
@@ -136,7 +134,6 @@ const EisenhowerMatrix = ({ allAudits }) => {
         subtitle: 'À planifier', 
         actions: q2, 
         color: 'border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100', 
-        icon: '📋', 
         headerColor: 'text-blue-700 bg-gradient-to-r from-blue-100 to-blue-200',
         bgGradient: 'from-blue-500 to-blue-600'
       },
@@ -146,7 +143,6 @@ const EisenhowerMatrix = ({ allAudits }) => {
         subtitle: 'À déléguer', 
         actions: q3, 
         color: 'border-yellow-300 bg-gradient-to-br from-yellow-50 to-yellow-100', 
-        icon: '👤➡️👤', 
         headerColor: 'text-yellow-700 bg-gradient-to-r from-yellow-100 to-yellow-200',
         bgGradient: 'from-yellow-500 to-yellow-600'
       },
@@ -156,7 +152,6 @@ const EisenhowerMatrix = ({ allAudits }) => {
         subtitle: 'Actions de maintenance', 
         actions: q4, 
         color: 'border-green-300 bg-gradient-to-br from-green-50 to-green-100', 
-        icon: '🕒', 
         headerColor: 'text-green-700 bg-gradient-to-r from-green-100 to-green-200',
         bgGradient: 'from-green-500 to-green-600'
       },
@@ -250,7 +245,7 @@ const EisenhowerMatrix = ({ allAudits }) => {
                     animate={{ opacity: 1 }}
                     className="text-center py-12 text-slate-500"
                   >
-                    <div className="text-4xl mb-4">✨</div>
+                    <div className="text-4xl mb-4"></div>
                     <p className="font-medium">Aucune action dans ce quadrant</p>
                     <p className="text-sm mt-2">C'est parfait pour votre productivité!</p>
                   </motion.div>
@@ -489,7 +484,6 @@ const RecapPage = () => {
   const [allAudits, setAllAudits] = useState([]);
   const [deadlines, setDeadlines] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showReportModal, setShowReportModal] = useState(false);
 
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -765,10 +759,9 @@ const RecapPage = () => {
             <ReportButton
               type="dashboard"
               size="md"
-              onClick={() => setShowReportModal(true)}
               className="transform hover:scale-105 transition-all duration-200"
             >
-              📊 Générer Rapport
+              Générer Rapport
             </ReportButton>
             <Link to="/reglementation">
               <Button 
@@ -962,14 +955,6 @@ const RecapPage = () => {
           </Card>
         </motion.div>
       </div>
-
-      {/* Modal de génération de rapport */}
-      <ReportModal
-        isOpen={showReportModal}
-        onClose={() => setShowReportModal(false)}
-        type="dashboard"
-        title="Générer un Rapport Dashboard"
-      />
     </div>
   );
 };

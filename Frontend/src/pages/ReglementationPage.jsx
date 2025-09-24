@@ -6,16 +6,11 @@ import { motion } from 'framer-motion';
 import { AlertCircleIcon } from "../icons/icon";
 import { useAuth } from '../context/AuthContext';
 import AuditModal from '../components/AuditModal.jsx';
-
-// Import des nouveaux composants
 import PageHeader from '../components/PageHeader.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import CardsView from '../components/CardsView.jsx';
 import TableView from '../components/TableView.jsx';
 import SaveMessage from '../components/SaveMessage.jsx';
-import FullscreenOverlay from '../components/FullscreenOverlay.jsx';
-import ReportButton from '../components/ReportButton.jsx';
-import ReportModal from '../components/ReportModal.jsx';
 
 const ReglementationPage = () => {
   const [regulations, setRegulations] = useState([]);
@@ -28,8 +23,6 @@ const ReglementationPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
   const { token } = useAuth();
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
 
 
   // États pour les filtres avancés avec domaine intégré
@@ -53,10 +46,7 @@ const ReglementationPage = () => {
 
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-  // Fonction pour basculer en mode plein écran
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
+
 
   // Charger les réglementations
   useEffect(() => {
@@ -258,7 +248,7 @@ const ReglementationPage = () => {
   // Loading state
   if (loading) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+      <div className={`min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 `}>
         <div className="flex items-center justify-center min-h-screen">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
@@ -279,7 +269,7 @@ const ReglementationPage = () => {
   // Error state
   if (error) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center p-6 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+      <div className={`min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center p-6`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -310,7 +300,7 @@ const ReglementationPage = () => {
   }
 
   return (
-    <div className={`<min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50> ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+    <div className={`<min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50>`}>
       <div className="flex flex-col h-screen">
         {/* Header avec Summary Dashboard */}
         <PageHeader
@@ -318,9 +308,6 @@ const ReglementationPage = () => {
           filters={filters}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          isFullscreen={isFullscreen}
-          onReportClick={() => setShowReportModal(true)}
-          toggleFullscreen={toggleFullscreen}
           viewMode={viewMode}
           setViewMode={setViewMode}
           handleFilterChange={handleFilterChange}
@@ -329,7 +316,7 @@ const ReglementationPage = () => {
         />
 
         {/* Content Area - Optimisé pour plus d'espace */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div>
           {filteredRegulations.length === 0 ? (
             <EmptyState
               searchTerm={searchTerm}
@@ -339,13 +326,11 @@ const ReglementationPage = () => {
           ) : viewMode === 'cards' ? (
             <CardsView
               groupedRegulations={groupedRegulations}
-              isFullscreen={isFullscreen}
               handleStartAudit={handleStartAudit}
             />
           ) : (
             <TableView
               filteredRegulations={filteredRegulations}
-              isFullscreen={isFullscreen}
               handleStartAudit={handleStartAudit}
             />
           )}
@@ -367,16 +352,9 @@ const ReglementationPage = () => {
         saveMessage={saveMessage}
       />
 
-      {/* Modal de génération de rapport */}
-      <ReportModal
-        isOpen={showReportModal}
-        onClose={() => setShowReportModal(false)}
-        type="reglementation"
-        title="Générer un Rapport Réglementation"
-      />
 
-      {/* Overlay pour le mode plein écran */}
-      <FullscreenOverlay isFullscreen={isFullscreen} />
+
+
     </div>
   );
 };

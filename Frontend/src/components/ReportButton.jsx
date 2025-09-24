@@ -196,7 +196,7 @@ const ReportButton = ({
       {/* Menu dropdown */}
       {showFormatMenu && (
         <>
-          <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl ring-1 ring-black/5 z-50 border border-gray-100 overflow-hidden">
+<div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl ring-1 ring-black/5 z-[9999] border border-gray-100 overflow-hidden">
             <div className="p-3">
               {/* En-tête */}
               <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 mb-3">

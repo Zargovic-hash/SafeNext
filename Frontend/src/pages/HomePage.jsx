@@ -234,7 +234,7 @@ const HomePage = () => {
           >
             Bienvenue sur{' '}
             <span className="gradient-text">
-              SafeNext
+              Audit Réglementaire
             </span>
           </motion.h1>
 
@@ -249,9 +249,8 @@ const HomePage = () => {
             variants={itemVariants}
             className="mt-8 max-w-4xl mx-auto text-lg sm:text-xl md:text-2xl text-gray-600 leading-relaxed relative z-10 text-pretty"
           >
-            SafeNext est la plateforme intelligente qui simplifie et centralise l'audit et la gestion de votre conformité réglementaire. 
-            <span className="text-primary-600 font-semibold"> Identifiez rapidement les faisabilités</span>, suivez vos progrès et 
-            <span className="text-accent-600 font-semibold"> assurez la conformité</span> de votre organisation.
+            Une plateforme intelligente qui simplifie et centralise l'audit et la gestion de votre conformité réglementaire. 
+            Gagnez du temps, réduisez les risques et assurez une conformité continue avec des outils puissants et une interface intuitive.
           </motion.p>
         </motion.div>
 
