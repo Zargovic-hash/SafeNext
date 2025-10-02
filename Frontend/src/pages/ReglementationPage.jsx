@@ -17,7 +17,9 @@ const ReglementationPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('cards');
+  const [viewMode, setViewMode] = useState('table');
+  // NOUVEL ÉTAT: Pour gérer la vue par défaut du tableau
+  const [tableSubView, setTableSubView] = useState('conformite');
   const [auditingRegulation, setAuditingRegulation] = useState(null);
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -313,6 +315,9 @@ const ReglementationPage = () => {
           handleFilterChange={handleFilterChange}
           handleResetFilters={handleResetFilters}
           regulations={regulations}
+          // PASSER LES NOUVEAUX PROPS
+          tableSubView={tableSubView}
+          setTableSubView={setTableSubView}
         />
 
         {/* Content Area - Optimisé pour plus d'espace */}
@@ -323,17 +328,19 @@ const ReglementationPage = () => {
               filters={filters}
               handleResetFilters={handleResetFilters}
             />
-          ) : viewMode === 'cards' ? (
+          ) : viewMode === 'table' ?  (
+            <TableView
+              filteredRegulations={filteredRegulations}
+              handleStartAudit={handleStartAudit}
+              // PASSER LE NOUVEL ÉTAT DE SOUS-VUE
+              tableSubView={tableSubView} 
+            />
+          ) : (
             <CardsView
               groupedRegulations={groupedRegulations}
               handleStartAudit={handleStartAudit}
             />
-          ) : (
-            <TableView
-              filteredRegulations={filteredRegulations}
-              handleStartAudit={handleStartAudit}
-            />
-          )}
+          )  }
         </div>
       </div>
 

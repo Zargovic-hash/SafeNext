@@ -145,6 +145,7 @@ const PageHeader = ({
                 layoutId="activeViewMode"
                 className="absolute inset-y-1 bg-white rounded-md shadow-sm"
                 style={{
+                  // Cette logique est correcte pour l'animation
                   left: viewMode === 'cards' ? '0.25rem' : 'calc(50%)',
                   width: 'calc(50% - 0.25rem)'
                 }}
