@@ -18,7 +18,6 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Rediriger si déjà connecté
   useEffect(() => {
     if (isAuthenticated) {
       const from = location.state?.from?.pathname || '/';
@@ -28,7 +27,6 @@ const LoginPage = () => {
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Nettoyer l'erreur quand l'utilisateur tape
     if (error) setError('');
   };
 
@@ -59,7 +57,6 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validation côté client
     if (!validateForm()) return;
     
     setLoading(true);
@@ -69,7 +66,6 @@ const LoginPage = () => {
       const result = await login(formData.email.trim(), formData.password);
       
       if (result.success) {
-        // Redirection gérée par useEffect
         const from = location.state?.from?.pathname || '/';
         navigate(from, { replace: true });
       } else {
@@ -90,66 +86,138 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center animated-bg py-12 px-4 sm:px-6 lg:px-8">
-      {/* Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 rounded-full opacity-20 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent-200 rounded-full opacity-20 animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-primary-100 to-accent-100 rounded-full opacity-10 animate-pulse delay-2000"></div>
+    <div className="min-h-screen flex">
+      {/* Section gauche - Image/Branding */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 overflow-hidden">
+        {/* Motif de fond */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+          }}></div>
+        </div>
+
+        {/* Formes décoratives animées */}
+        <motion.div 
+          className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.2, 0.1]
+          }}
+          transition={{ 
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.3, 1],
+            opacity: [0.2, 0.3, 0.2]
+          }}
+          transition={{ 
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+
+        {/* Contenu */}
+        <div className="relative z-10 flex flex-col justify-center px-16 text-white">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <div className="mb-8">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
+                <DocumentIcon className="h-9 w-9 text-white" />
+              </div>
+              <h1 className="text-5xl font-bold mb-4 leading-tight">
+                SafeNext
+              </h1>
+              <p className="text-xl text-blue-100 leading-relaxed">
+                Gérez vos documents en toute sécurité avec notre plateforme innovante
+              </p>
+            </div>
+
+            <div className="space-y-6 mt-12">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">Sécurité renforcée</h3>
+                  <p className="text-blue-100 text-sm">Vos données sont protégées par un chiffrement de niveau entreprise</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">Accès rapide</h3>
+                  <p className="text-blue-100 text-sm">Retrouvez vos documents en quelques secondes</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">Collaboration</h3>
+                  <p className="text-blue-100 text-sm">Travaillez en équipe efficacement</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-md w-full relative z-10"
-      >
-        <Card className="shadow-large glass border-0">
-          <CardHeader className="space-y-1 text-center pb-8">
-            <motion.div 
-              className="flex justify-center mb-6"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            >
-              <div className="w-20 h-20 bg-gradient-to-br from-primary-600 to-accent-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <DocumentIcon className="h-10 w-10 text-white" />
-              </div>
-            </motion.div>
-            <CardTitle className="text-3xl font-bold gradient-text">Connexion</CardTitle>
-            <CardDescription>
-              Connectez-vous à votre compte SafeNext
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
+      {/* Section droite - Formulaire */}
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-md w-full"
+        >
+          <div className="bg-white rounded-2xl shadow-xl p-8 sm:p-10">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                Connexion
+              </h2>
+              <p className="text-gray-600">
+                Accédez à votre espace SafeNext
+              </p>
+            </div>
+
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4"
+                className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg"
               >
                 <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm">{error}</p>
-                  </div>
+                  <svg className="h-5 w-5 text-red-500 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <p className="ml-3 text-sm text-red-700">{error}</p>
                 </div>
               </motion.div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <motion.div 
-                className="space-y-2"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+              <div>
+                <Label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Adresse email
                 </Label>
                 <Input
@@ -161,19 +229,14 @@ const LoginPage = () => {
                   onKeyPress={handleKeyPress}
                   required
                   disabled={loading}
-                  size="lg"
                   autoComplete="email"
                   autoFocus
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
-              </motion.div>
+              </div>
 
-              <motion.div 
-                className="space-y-2"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+              <div>
+                <Label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                   Mot de passe
                 </Label>
                 <div className="relative">
@@ -186,77 +249,62 @@ const LoginPage = () => {
                     onKeyPress={handleKeyPress}
                     required
                     disabled={loading}
-                    size="lg"
-                    className="pr-12"
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     autoComplete="current-password"
                   />
-                  <motion.button
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                     disabled={loading}
                     tabIndex={-1}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
                   >
                     {showPassword ? 
                       <PasswordHideIcon className="h-5 w-5" /> : 
                       <PasswordViewIcon className="h-5 w-5" />
                     }
-                  </motion.button>
+                  </button>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <Button
-                  type="submit"
-                  className="w-full"
-                  size="lg"
-                  disabled={loading || !formData.email || !formData.password}
-                  loading={loading}
+              <div className="flex items-center justify-end">
+                <Link 
+                  to="/forgot-password" 
+                  className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
                 >
-                  {loading ? 'Connexion...' : 'Se connecter'}
-                </Button>
-              </motion.div>
+                  Mot de passe oublié ?
+                </Link>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                disabled={loading || !formData.email || !formData.password}
+                loading={loading}
+              >
+                {loading ? 'Connexion...' : 'Se connecter'}
+              </Button>
             </form>
 
-            <motion.div 
-              className="mt-8 space-y-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-            >
-              <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  Pas encore de compte ?{' '}
-                  <Link 
-                    to="/register" 
-                    className="text-primary-600 hover:text-primary-700 font-semibold hover:underline transition-colors"
-                  >
-                    S'inscrire
-                  </Link>
-                </p>
-              </div>
+            <div className="mt-8 text-center">
+              <p className="text-sm text-gray-600">
+                Pas encore de compte ?{' '}
+                <Link 
+                  to="/register" 
+                  className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  Créer un compte
+                </Link>
+              </p>
+            </div>
+          </div>
 
-              <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  Mot de passe oublié ?{' '}
-                  <Link 
-                    to="/forgot-password" 
-                    className="text-primary-600 hover:text-primary-700 font-semibold hover:underline transition-colors"
-                  >
-                    Récupérez votre mot de passe
-                  </Link>
-                </p>
-              </div>
-            </motion.div>
-          </CardContent>
-        </Card>
-      </motion.div>
+          {/* Footer links */}
+          <div className="mt-8 text-center text-sm text-gray-500">
+            <p>© 2025 SafeNext. Tous droits réservés.</p>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 };
