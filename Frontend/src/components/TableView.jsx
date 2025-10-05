@@ -114,7 +114,7 @@ const ColumnViewSelector = ({ activeView, setActiveView }) => {
 
 const TableView = ({ filteredRegulations, isFullscreen, handleStartAudit }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
-  const [activeView, setActiveView] = useState('full'); // New state for view selection
+  const [activeView, setActiveView] = useState('compliance'); // New state for view selection
 
   // Memoize sorted regulations
   const sortedRegulations = useMemo(() => {
